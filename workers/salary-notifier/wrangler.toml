@@ -1,0 +1,20 @@
+name = "yoyuan-salary-notifier"
+main = "src/index.js"
+compatibility_date = "2026-06-16"
+compatibility_flags = ["nodejs_compat"]
+
+[triggers]
+crons = ["0 * * * *"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "yoyuan-ledger-db"
+database_id = "236a04da-7a76-4fc7-a8b8-e077ac39aa2c"
+
+[vars]
+APP_URL = "https://yoyuan7788.pages.dev"
+VAPID_SUBJECT = "2529557684@qq.com"
+
+# 这两个建议在 Cloudflare Dashboard / Wrangler secrets 里配置
+# wrangler secret put VAPID_PUBLIC_KEY
+# wrangler secret put VAPID_PRIVATE_KEY
