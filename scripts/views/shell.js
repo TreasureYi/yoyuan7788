@@ -249,7 +249,7 @@ export function createShell() {
               <div class="panel-note__list">
                 <div class="panel-note__item">
                   <span class="panel-note__dot"></span>
-                  <span>界面、样式、脚本都已经整理到 <code>project/</code> 下，根目录只保留部署入口。</span>
+                  <span>界面、样式、脚本都已经拆分成独立目录，根目录保持单层、直观、可维护。</span>
                 </div>
                 <div class="panel-note__item">
                   <span class="panel-note__dot"></span>

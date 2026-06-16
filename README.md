@@ -10,17 +10,14 @@
 
 ## 项目结构
 
-正式源码文件现已整理至根目录：
+项目现在就是单层正式结构，没有多包一层源码目录：
 
-- `styles/`: 设计系统与页面样式
-- `scripts/`: 模块化业务逻辑
-- `assets/icons/`: 图标资源
-
-根目录部署入口：
-
-- [index.html](index.html)
-- [manifest.webmanifest](manifest.webmanifest)
-- [sw.js](sw.js)
+- [assets](assets): 图标与静态资源
+- [scripts](scripts): 模块化业务逻辑
+- [styles](styles): 设计系统与页面样式
+- [index.html](index.html): 应用入口
+- [manifest.webmanifest](manifest.webmanifest): PWA 配置
+- [sw.js](sw.js): 离线缓存
 
 ## 更新方式
 
