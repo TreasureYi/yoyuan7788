@@ -69,17 +69,21 @@ export function renderDashboard(state, refs) {
   const nextSalaryDate = getNextSalaryDate(state.salary.day);
   const sorted = getSortedReminders(state.reminders);
   const overdueCount = state.reminders.filter((entry) => getDaysUntil(entry.date) < 0).length;
+  const soonCount = state.reminders.filter((entry) => {
+    const days = getDaysUntil(entry.date);
+    return days >= 0 && days <= 7;
+  }).length;
   const nextReminder = sorted.find((entry) => getDaysUntil(entry.date) >= 0) || sorted[0];
 
   refs.todayLabel.textContent = formatDateWithWeekday(new Date());
   refs.storageState.textContent = state.reminders.length
-    ? `本地已保存 ${state.reminders.length} 条事项${state.preferences.city ? `，天气城市：${state.preferences.city}` : ""}`
-    : "当前还没有记录，适合先录入最常用的账单和证件节点。";
+    ? `已保存 ${state.reminders.length} 条事项${state.preferences.city ? `，天气城市：${state.preferences.city}` : ""}，支持本地备份和日历导出。`
+    : "当前还没有记录，建议先补齐常用账单、证件和会员节点。";
   refs.metricNextSalary.textContent = formatDateWithWeekday(nextSalaryDate);
   refs.metricNextReminder.textContent = nextReminder
     ? `${nextReminder.title} · ${formatCountdown(getDaysUntil(nextReminder.date))}`
     : "暂无项目";
-  refs.metricOverdue.textContent = `${overdueCount} 条`;
+  refs.metricOverdue.textContent = overdueCount ? `逾期 ${overdueCount} 条` : soonCount ? `7 天内 ${soonCount} 条` : "状态正常";
 }
 
 export function renderSalaryPanel(state, refs) {
@@ -126,7 +130,7 @@ export function renderWeatherPanel(state, refs) {
     refs.weatherCard.innerHTML = `
       <div class="empty-state">
         <p class="empty-state__title">这里会显示你关注城市的天气</p>
-        <p class="empty-state__copy">适合作为一个轻量补充信息区，不打断主任务，只在需要时给出即时感知。</p>
+        <p class="empty-state__copy">它被放在侧边辅助区，只在需要时补充当天体感，不干扰主看板的任务扫描。</p>
       </div>
     `;
     return;
