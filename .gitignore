@@ -2,3 +2,6 @@
 .playwright-cli/
 outputs/
 work/
+node_modules/
+.wrangler/
+workers/**/node_modules/

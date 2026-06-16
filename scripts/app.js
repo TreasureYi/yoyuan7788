@@ -11,8 +11,25 @@ import {
   updateSalary
 } from "./state.js";
 import { exportBoardCalendar, exportSingleReminder, downloadText } from "./services/calendar.js";
+import {
+  disableSalaryPushNotifications,
+  enableSalaryPushNotifications,
+  getCurrentPushSubscription,
+  isStandaloneExperience,
+  supportsPushNotifications,
+  syncSalaryPushRule
+} from "./services/push.js";
 import { fetchWeatherReport } from "./services/weather.js";
-import { createRefs, populateSalaryOptions, renderAgenda, renderDashboard, renderReminderBoard, renderSalaryPanel, renderWeatherPanel } from "./views/render.js";
+import {
+  createRefs,
+  populateSalaryOptions,
+  renderAgenda,
+  renderDashboard,
+  renderPushPanel,
+  renderReminderBoard,
+  renderSalaryPanel,
+  renderWeatherPanel
+} from "./views/render.js";
 import { createShell } from "./views/shell.js";
 
 let deferredInstallPrompt = null;
@@ -31,6 +48,7 @@ function boot() {
   bindEvents(refs);
   renderAll(refs);
   registerServiceWorker();
+  hydratePushSubscription(refs);
 
   window.addEventListener("beforeinstallprompt", (event) => {
     event.preventDefault();
@@ -40,14 +58,27 @@ function boot() {
 }
 
 function bindEvents(refs) {
+  refs.composeTriggers.forEach((button) => {
+    button.addEventListener("click", () => {
+      refs.composeDisclosure?.setAttribute("open", "");
+      refs.composeDisclosure?.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
+    });
+  });
+
   refs.salaryForm.addEventListener("submit", (event) => {
     event.preventDefault();
+    const notification = getNotificationFormState(refs);
     updateSalary({
       day: Number(refs.salaryDaySelect.value),
       amount: refs.salaryAmountInput.value.trim(),
-      account: refs.salaryAccountInput.value.trim()
+      account: refs.salaryAccountInput.value.trim(),
+      notification
     });
     renderAll(refs);
+    syncExistingPushSubscription(refs);
   });
 
   refs.reminderForm.addEventListener("submit", (event) => {
@@ -65,6 +96,7 @@ function bindEvents(refs) {
     refs.reminderCategoryInput.value = "账单";
     refs.reminderLeadDaysInput.value = "3";
     renderAll(refs);
+    refs.composeDisclosure?.setAttribute("open", "");
   });
 
   refs.weatherForm.addEventListener("submit", async (event) => {
@@ -109,6 +141,78 @@ function bindEvents(refs) {
     downloadText("yoyuan-ledger-backup.json", buildBackupPayload(), "application/json;charset=utf-8");
   });
 
+  refs.pushEnableButton.addEventListener("click", async () => {
+    const state = getState();
+    const nextNotification = getNotificationFormState(refs);
+
+    updateSalary({
+      notification: {
+        ...state.salary.notification,
+        ...nextNotification,
+        lastError: ""
+      }
+    });
+    renderAll(refs);
+
+    try {
+      const result = await enableSalaryPushNotifications({
+        day: state.salary.day,
+        leadDays: nextNotification.leadDays,
+        hour: nextNotification.hour,
+        timezone: nextNotification.timezone
+      });
+
+      updateSalary({
+        notification: {
+          ...getState().salary.notification,
+          ...nextNotification,
+          enabled: true,
+          permission: "granted",
+          endpoint: result.endpoint,
+          lastSyncedAt: new Date().toISOString(),
+          lastError: ""
+        }
+      });
+    } catch (error) {
+      updateSalary({
+        notification: {
+          ...getState().salary.notification,
+          ...nextNotification,
+          enabled: false,
+          permission: typeof Notification === "undefined" ? "default" : Notification.permission,
+          lastError: error.message
+        }
+      });
+    }
+
+    renderAll(refs);
+  });
+
+  refs.pushDisableButton.addEventListener("click", async () => {
+    try {
+      await disableSalaryPushNotifications();
+      updateSalary({
+        notification: {
+          ...getState().salary.notification,
+          enabled: false,
+          endpoint: "",
+          permission: typeof Notification === "undefined" ? "default" : Notification.permission,
+          lastError: "",
+          lastSyncedAt: new Date().toISOString()
+        }
+      });
+    } catch (error) {
+      updateSalary({
+        notification: {
+          ...getState().salary.notification,
+          lastError: error.message
+        }
+      });
+    }
+
+    renderAll(refs);
+  });
+
   refs.filters.forEach((button) => {
     button.addEventListener("click", () => {
       setReminderFilter(button.dataset.filter || REMINDER_FILTERS.all);
@@ -149,6 +253,7 @@ function renderAll(refs) {
   const state = getState();
   renderDashboard(state, refs);
   renderSalaryPanel(state, refs);
+  renderPushPanel(state, refs, getPushCapabilities());
   renderWeatherPanel(state, refs);
   renderReminderBoard(state, refs);
   renderAgenda(state, refs);
@@ -164,4 +269,91 @@ function registerServiceWorker() {
       console.warn("Service worker registration failed", error);
     });
   });
+}
+
+async function hydratePushSubscription(refs) {
+  if (!supportsPushNotifications()) {
+    renderAll(refs);
+    return;
+  }
+
+  try {
+    const subscription = await getCurrentPushSubscription();
+    const permission = typeof Notification === "undefined" ? "default" : Notification.permission;
+    updateSalary({
+      notification: {
+        ...getState().salary.notification,
+        permission,
+        endpoint: subscription?.endpoint || "",
+        enabled: Boolean(subscription?.endpoint) && permission === "granted",
+        lastError: ""
+      }
+    });
+  } catch (error) {
+    updateSalary({
+      notification: {
+        ...getState().salary.notification,
+        permission: typeof Notification === "undefined" ? "default" : Notification.permission,
+        lastError: error.message
+      }
+    });
+  }
+
+  renderAll(refs);
+}
+
+async function syncExistingPushSubscription(refs) {
+  if (!supportsPushNotifications()) {
+    return;
+  }
+
+  const notification = getState().salary.notification;
+  if (!notification.enabled || Notification.permission !== "granted") {
+    return;
+  }
+
+  try {
+    const result = await syncSalaryPushRule({
+      day: getState().salary.day,
+      leadDays: notification.leadDays,
+      hour: notification.hour,
+      timezone: notification.timezone
+    });
+
+    if (result?.endpoint) {
+      updateSalary({
+        notification: {
+          ...getState().salary.notification,
+          endpoint: result.endpoint,
+          lastSyncedAt: new Date().toISOString(),
+          lastError: ""
+        }
+      });
+      renderAll(refs);
+    }
+  } catch (error) {
+    updateSalary({
+      notification: {
+        ...getState().salary.notification,
+        lastError: error.message
+      }
+    });
+    renderAll(refs);
+  }
+}
+
+function getNotificationFormState(refs) {
+  return {
+    leadDays: Number(refs.pushLeadDaysInput.value) || 0,
+    hour: Number(refs.pushHourInput.value) || 9,
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Shanghai",
+    permission: typeof Notification === "undefined" ? "default" : Notification.permission
+  };
+}
+
+function getPushCapabilities() {
+  return {
+    supported: supportsPushNotifications(),
+    standalone: typeof window !== "undefined" ? isStandaloneExperience() : false
+  };
 }

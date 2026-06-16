@@ -9,53 +9,65 @@ export function createShell() {
           <div class="brand-mark">薪</div>
           <div class="brand-copy">
             <p class="brand-copy__title">薪期台账</p>
-            <p class="brand-copy__subtitle">工资、账单与到期事项的一体化个人工作台</p>
+            <p class="brand-copy__subtitle">长期自用的工资、账单与到期事项工作台</p>
           </div>
         </div>
 
         <div class="topbar__actions">
-          <button id="installButton" class="button button--secondary" type="button">添加到主屏幕</button>
-          <button id="calendarExportButton" class="button button--ghost" type="button">导出日历</button>
-          <button id="backupExportButton" class="button button--primary" type="button">导出备份</button>
+          <button class="button button--primary" data-open-compose type="button">新增事项</button>
+          <a class="button button--secondary" href="#board">查看看板</a>
         </div>
       </header>
 
       <main class="workspace">
         <section class="overview panel">
           <div class="overview__main">
-            <p class="eyebrow">Overview</p>
-            <h1 class="overview__headline">把工资周期、到期事项和接下来 30 天的节奏，放进一个更像正式工作台的界面。</h1>
-            <p class="overview__copy">
-              这个首页现在先按企业级产品的思路重新分区：上面放概览和风险，中间放执行任务，右侧放配置与辅助信息。这样你一进来先看状态，再做录入，不会把所有内容堆成一块。
-            </p>
+            <div class="overview__copy-block">
+              <p class="eyebrow">Dashboard Overview</p>
+              <h1 class="overview__headline">先看状态，再处理事项，最后进入配置和辅助工具。</h1>
+              <p class="overview__copy">
+                首页不再把所有功能堆在一起。它现在只负责三件事：告诉你下一次发薪和最近到期，给你进入主看板的路径，以及把配置与工具收纳到稳定位置。
+              </p>
+            </div>
 
             <div class="overview__actions">
-              <a class="button button--primary" href="#compose">新增事项</a>
-              <a class="button button--secondary" href="#board">查看事项看板</a>
+              <button class="button button--primary" data-open-compose type="button">新增事项</button>
+              <a class="button button--secondary" href="#agenda">查看 30 天时间线</a>
+            </div>
+
+            <div class="overview__rule-grid">
+              <article class="rule-card">
+                <span class="rule-card__label">核心对象</span>
+                <strong class="rule-card__value">工资、提醒、时间线、风险事项</strong>
+              </article>
+              <article class="rule-card">
+                <span class="rule-card__label">辅助工具</span>
+                <strong class="rule-card__value">天气、安装、导出、备份与后续同步</strong>
+              </article>
             </div>
           </div>
 
           <aside class="overview__side">
             <article class="overview-card overview-card--emphasis">
-              <span class="overview-card__label">今日状态</span>
+              <span class="overview-card__label">今日摘要</span>
               <strong id="todayLabel" class="overview-card__value">--</strong>
               <p id="storageState" class="overview-card__support">正在读取本地状态...</p>
             </article>
 
             <article class="overview-card">
-              <span class="overview-card__label">界面分区</span>
+              <span class="overview-card__label">首页规则</span>
               <div class="stack-points">
                 <div class="stack-point">
-                  <strong>概览区</strong>
-                  <span>先看发薪节点、最近到期和风险数量。</span>
+                  <strong>总览优先</strong>
+                  <span>先看发薪、到期和风险，不在首屏展示所有配置细节。</span>
                 </div>
                 <div class="stack-point">
-                  <strong>执行区</strong>
-                  <span>看板和时间线负责日常查看与处理。</span>
+                  <strong>主任务固定</strong>
+                  <span>看板和时间线始终是核心工作层，新增模块不能挤占它们的位置。</span>
                 </div>
                 <div class="stack-point">
-                  <strong>配置区</strong>
-                  <span>发薪设置、事项录入和天气放在侧边，避免干扰主任务。</span>
+                  <strong>工具降级</strong>
+                  <span>天气和导出类能力进入辅助工具区，不和薪资配置并列。</span>
                 </div>
               </div>
             </article>
@@ -85,79 +97,50 @@ export function createShell() {
           </article>
         </section>
 
-        <section class="workspace-frame">
-          <div class="workspace-main">
-            <article class="panel card board-panel" id="board">
-              <div class="board-head">
-                <div class="section-head__copy">
-                  <p class="eyebrow">Due Board</p>
-                  <h2 class="section-title">事项看板</h2>
-                  <p class="section-copy">核心任务放在主视区，适合每天快速扫一眼优先级、到期日和处理动作。</p>
-                </div>
-                <div class="board-actions">
-                  <span id="reminderCount" class="pill">0 条</span>
-                  <span id="reminderSummary" class="summary-inline">还没有任何记录</span>
-                </div>
+        <section class="main-grid">
+          <article class="panel card board-panel" id="board">
+            <div class="board-head">
+              <div class="section-head__copy">
+                <p class="eyebrow">Due Board</p>
+                <h2 class="section-title">事项看板</h2>
+                <p class="section-copy">主视区只保留真正高频的任务列表，适合每天快速扫一眼优先级、到期日和处理动作。</p>
               </div>
-
-              <div class="filters" role="tablist" aria-label="提醒筛选">
-                <button class="filter is-active" data-filter="all" type="button">全部</button>
-                <button class="filter" data-filter="upcoming" type="button">7 天内</button>
-                <button class="filter" data-filter="overdue" type="button">已逾期</button>
+              <div class="board-actions">
+                <span id="reminderCount" class="pill">0 条</span>
+                <span id="reminderSummary" class="summary-inline">还没有任何记录</span>
               </div>
-
-              <div id="reminderList" class="reminder-list"></div>
-            </article>
-
-            <div class="workspace-row">
-              <article class="panel card" id="agenda">
-                <div class="section-head">
-                  <div class="section-head__copy">
-                    <p class="eyebrow">Next 30 Days</p>
-                    <h2 class="section-title">时间线</h2>
-                    <p class="section-copy">把发薪节点和到期事项放在同一条时间线里，方便观察接下来一个月的节奏。</p>
-                  </div>
-                </div>
-
-                <div id="agendaList" class="agenda-list"></div>
-              </article>
-
-              <article class="panel card planning-card">
-                <div class="section-head">
-                  <div class="section-head__copy">
-                    <p class="eyebrow">Operating Model</p>
-                    <h2 class="section-title">同步与备份规划</h2>
-                    <p class="section-copy">先满足稳定自用，再逐步扩展到团队里常见的同步和恢复能力。</p>
-                  </div>
-                </div>
-
-                <div class="panel-note">
-                  <div class="panel-note__list">
-                    <div class="panel-note__item">
-                      <span class="panel-note__dot"></span>
-                      <span>当前数据保存在本地浏览器，适合先快速投入使用，不依赖账号系统。</span>
-                    </div>
-                    <div class="panel-note__item">
-                      <span class="panel-note__dot"></span>
-                      <span>通过 ICS 日历导出和 JSON 备份先解决迁移与恢复，不把同步复杂度提前压进首页。</span>
-                    </div>
-                    <div class="panel-note__item">
-                      <span class="panel-note__dot"></span>
-                      <span>如果后续接云端，同样可以保持“概览、执行、配置”这套分区，不需要重做页面骨架。</span>
-                    </div>
-                  </div>
-                </div>
-              </article>
             </div>
-          </div>
 
-          <aside class="workspace-side">
+            <div class="filters" role="tablist" aria-label="提醒筛选">
+              <button class="filter is-active" data-filter="all" type="button">全部</button>
+              <button class="filter" data-filter="upcoming" type="button">7 天内</button>
+              <button class="filter" data-filter="overdue" type="button">已逾期</button>
+            </div>
+
+            <div id="reminderList" class="reminder-list"></div>
+          </article>
+
+          <article class="panel card" id="agenda">
+            <div class="section-head">
+              <div class="section-head__copy">
+                <p class="eyebrow">Next 30 Days</p>
+                <h2 class="section-title">时间线</h2>
+                <p class="section-copy">把发薪节点和到期事项放在同一条时间线里，方便快速理解接下来一个月的节奏。</p>
+              </div>
+            </div>
+
+            <div id="agendaList" class="agenda-list"></div>
+          </article>
+        </section>
+
+        <section class="support-grid">
+          <div class="support-grid__config">
             <article class="panel card salary-panel">
               <div class="section-head">
                 <div class="section-head__copy">
-                  <p class="eyebrow">Salary Cycle</p>
+                  <p class="eyebrow">Core Configuration</p>
                   <h2 class="section-title">发薪节奏</h2>
-                  <p class="section-copy">先固定你的月度薪资节奏，后面的提醒和时间线才会更贴近真实生活。</p>
+                  <p class="section-copy">薪资是系统主轴，放在核心配置区，影响你的时间线和发薪节点理解。</p>
                 </div>
                 <span id="salaryStatus" class="pill pill--dark">已启用</span>
               </div>
@@ -216,90 +199,181 @@ export function createShell() {
               </form>
             </article>
 
-            <article class="panel card" id="compose">
+            <article class="panel card notification-panel">
               <div class="section-head">
                 <div class="section-head__copy">
-                  <p class="eyebrow">Reminder Composer</p>
-                  <h2 class="section-title">新增到期事项</h2>
-                  <p class="section-copy">录入区收在侧边，方便随时新增，但不会抢走主看板的注意力。</p>
+                  <p class="eyebrow">System Ability</p>
+                  <h2 class="section-title">发薪提醒</h2>
+                  <p class="section-copy">当你把站点加到 iPhone 主屏幕后，可以把发薪规则同步到云端，由定时任务每月推送到你的手机。</p>
                 </div>
+                <span id="pushStatusBadge" class="pill">未开启</span>
               </div>
 
-              <form id="reminderForm" class="stack-form">
-                <label class="field">
-                  <span class="field__label">提醒标题</span>
-                  <input
-                    id="reminderTitleInput"
-                    name="title"
-                    class="input"
-                    type="text"
-                    placeholder="例如 手机套餐续费"
-                    required
-                  />
-                </label>
+              <div class="notification-panel__body">
+                <p id="pushSupportNote" class="form-note">
+                  当前会优先检测浏览器是否支持 Web Push，并提示你是否已经用主屏幕模式安装。
+                </p>
 
                 <div class="split-grid">
                   <label class="field">
-                    <span class="field__label">到期日期</span>
-                    <input id="reminderDateInput" name="date" class="input" type="date" required />
-                  </label>
-
-                  <label class="field">
-                    <span class="field__label">分类</span>
-                    <select id="reminderCategoryInput" name="category" class="select">
-                      <option value="账单">账单</option>
-                      <option value="会员">会员</option>
-                      <option value="证件">证件</option>
-                      <option value="合同">合同</option>
-                      <option value="家庭">家庭</option>
-                      <option value="其他">其他</option>
-                    </select>
-                  </label>
-                </div>
-
-                <div class="split-grid">
-                  <label class="field">
-                    <span class="field__label">提前准备天数</span>
+                    <span class="field__label">提前提醒天数</span>
                     <input
-                      id="reminderLeadDaysInput"
-                      name="leadDays"
+                      id="pushLeadDaysInput"
+                      name="pushLeadDays"
                       class="input"
                       type="number"
                       min="0"
-                      max="30"
-                      value="3"
+                      max="7"
+                      value="0"
                     />
                   </label>
 
-                  <div class="field">
-                    <span class="field__label">保存方式</span>
-                    <div class="pill">当前浏览器本地保存</div>
-                  </div>
+                  <label class="field">
+                    <span class="field__label">提醒时间</span>
+                    <input
+                      id="pushHourInput"
+                      name="pushHour"
+                      class="input"
+                      type="number"
+                      min="0"
+                      max="23"
+                      value="9"
+                    />
+                  </label>
                 </div>
 
-                <label class="field">
-                  <span class="field__label">备注</span>
-                  <textarea
-                    id="reminderNotesInput"
-                    name="notes"
-                    class="textarea"
-                    placeholder="记录金额、联系人、续费规则或需要提前准备的内容"
-                  ></textarea>
-                </label>
-
-                <div class="form-foot">
-                  <p class="form-note">后续如果接账号或云端同步，这个录入结构也可以继续复用。</p>
-                  <button class="button button--primary" type="submit">保存事项</button>
+                <div class="pill-row">
+                  <span id="pushTimezoneLabel" class="pill">Asia/Shanghai</span>
+                  <span id="pushPermissionLabel" class="pill">权限未请求</span>
                 </div>
-              </form>
+
+                <div class="notification-panel__actions">
+                  <button id="pushEnableButton" class="button button--primary" type="button">开启发薪提醒</button>
+                  <button id="pushDisableButton" class="button button--secondary" type="button">关闭提醒</button>
+                </div>
+
+                <p id="pushSyncState" class="form-note">开启后会把发薪日、提醒时间和当前设备订阅一起同步到推送服务。</p>
+              </div>
             </article>
 
-            <article class="panel card">
+            <article class="panel card quick-add-panel" id="quickAdd">
+              <div class="section-head">
+                <div class="section-head__copy">
+                  <p class="eyebrow">Quick Entry</p>
+                  <h2 class="section-title">新增到期事项</h2>
+                  <p class="section-copy">首屏只保留入口，完整录入表单收在这里，避免把首页变成一张从头到尾的长表单。</p>
+                </div>
+              </div>
+
+              <details id="composeDisclosure" class="composer-disclosure">
+                <summary class="composer-disclosure__summary">
+                  <span class="composer-disclosure__title">展开录入表单</span>
+                  <span class="composer-disclosure__hint">填写标题、日期、分类和备注</span>
+                </summary>
+
+                <form id="reminderForm" class="stack-form composer-disclosure__body">
+                  <label class="field">
+                    <span class="field__label">提醒标题</span>
+                    <input
+                      id="reminderTitleInput"
+                      name="title"
+                      class="input"
+                      type="text"
+                      placeholder="例如 手机套餐续费"
+                      required
+                    />
+                  </label>
+
+                  <div class="split-grid">
+                    <label class="field">
+                      <span class="field__label">到期日期</span>
+                      <input id="reminderDateInput" name="date" class="input" type="date" required />
+                    </label>
+
+                    <label class="field">
+                      <span class="field__label">分类</span>
+                      <select id="reminderCategoryInput" name="category" class="select">
+                        <option value="账单">账单</option>
+                        <option value="会员">会员</option>
+                        <option value="证件">证件</option>
+                        <option value="合同">合同</option>
+                        <option value="家庭">家庭</option>
+                        <option value="其他">其他</option>
+                      </select>
+                    </label>
+                  </div>
+
+                  <div class="split-grid">
+                    <label class="field">
+                      <span class="field__label">提前准备天数</span>
+                      <input
+                        id="reminderLeadDaysInput"
+                        name="leadDays"
+                        class="input"
+                        type="number"
+                        min="0"
+                        max="30"
+                        value="3"
+                      />
+                    </label>
+
+                    <div class="field">
+                      <span class="field__label">保存方式</span>
+                      <div class="pill">当前浏览器本地保存</div>
+                    </div>
+                  </div>
+
+                  <label class="field">
+                    <span class="field__label">备注</span>
+                    <textarea
+                      id="reminderNotesInput"
+                      name="notes"
+                      class="textarea"
+                      placeholder="记录金额、联系人、续费规则或需要提前准备的内容"
+                    ></textarea>
+                  </label>
+
+                  <div class="form-foot">
+                    <p class="form-note">录入结构会继续保留，后续接账号或云端同步也不用重做表单。</p>
+                    <button class="button button--primary" type="submit">保存事项</button>
+                  </div>
+                </form>
+              </details>
+            </article>
+          </div>
+
+          <aside class="support-grid__tools">
+            <article class="panel card utility-panel">
+              <div class="section-head">
+                <div class="section-head__copy">
+                  <p class="eyebrow">Auxiliary Tools</p>
+                  <h2 class="section-title">辅助工具区</h2>
+                  <p class="section-copy">安装、导出和备份都放在同一个工具区，避免它们在首页首屏和主任务并列。</p>
+                </div>
+              </div>
+
+              <div class="utility-actions">
+                <button id="installButton" class="utility-action utility-action--primary" type="button">
+                  <span class="utility-action__title">安装到主屏幕</span>
+                  <span class="utility-action__meta">保留离线能力和更像原生的访问入口</span>
+                </button>
+                <button id="calendarExportButton" class="utility-action" type="button">
+                  <span class="utility-action__title">导出日历</span>
+                  <span class="utility-action__meta">把事项节点同步到你的日历系统</span>
+                </button>
+                <button id="backupExportButton" class="utility-action" type="button">
+                  <span class="utility-action__title">导出备份</span>
+                  <span class="utility-action__meta">导出本地 JSON，方便迁移与恢复</span>
+                </button>
+              </div>
+            </article>
+
+            <article class="panel card weather-panel">
               <div class="section-head">
                 <div class="section-head__copy">
                   <p class="eyebrow">Weather Snapshot</p>
                   <h2 class="section-title">天气速览</h2>
-                  <p class="section-copy">作为辅助信息放在侧边，只在需要时补充今天的体感和出门条件。</p>
+                  <p class="section-copy">作为辅助信息保留在工具区，只在需要时补充当天体感，不干扰工资和事项主流程。</p>
                 </div>
                 <span id="weatherState" class="pill">未查询</span>
               </div>
@@ -313,6 +387,33 @@ export function createShell() {
               </form>
 
               <div id="weatherCard" class="weather-card"></div>
+            </article>
+
+            <article class="panel card planning-card">
+              <div class="section-head">
+                <div class="section-head__copy">
+                  <p class="eyebrow">Expansion Rules</p>
+                  <h2 class="section-title">后续新增模块怎么放</h2>
+                  <p class="section-copy">以后要加同步状态、通知设置或其他工具时，先按层级归类，不再直接把卡片往首页下方堆。</p>
+                </div>
+              </div>
+
+              <div class="panel-note">
+                <div class="panel-note__list">
+                  <div class="panel-note__item">
+                    <span class="panel-note__dot"></span>
+                    <span>会影响工资、提醒、时间线语义的功能，进入核心配置区或主任务区。</span>
+                  </div>
+                  <div class="panel-note__item">
+                    <span class="panel-note__dot"></span>
+                    <span>安装、导出、天气、同步状态这类能力，默认进入辅助工具区。</span>
+                  </div>
+                  <div class="panel-note__item">
+                    <span class="panel-note__dot"></span>
+                    <span>如果以后需要更多工具，优先扩展工具区，不破坏首页的总览和主任务顺序。</span>
+                  </div>
+                </div>
+              </div>
             </article>
           </aside>
         </section>

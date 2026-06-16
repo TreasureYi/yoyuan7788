@@ -30,12 +30,23 @@ export function createRefs(root) {
     salaryDaySelect: root.querySelector("#salaryDaySelect"),
     salaryAmountInput: root.querySelector("#salaryAmountInput"),
     salaryAccountInput: root.querySelector("#salaryAccountInput"),
+    pushStatusBadge: root.querySelector("#pushStatusBadge"),
+    pushSupportNote: root.querySelector("#pushSupportNote"),
+    pushLeadDaysInput: root.querySelector("#pushLeadDaysInput"),
+    pushHourInput: root.querySelector("#pushHourInput"),
+    pushTimezoneLabel: root.querySelector("#pushTimezoneLabel"),
+    pushPermissionLabel: root.querySelector("#pushPermissionLabel"),
+    pushEnableButton: root.querySelector("#pushEnableButton"),
+    pushDisableButton: root.querySelector("#pushDisableButton"),
+    pushSyncState: root.querySelector("#pushSyncState"),
     reminderForm: root.querySelector("#reminderForm"),
     reminderTitleInput: root.querySelector("#reminderTitleInput"),
     reminderDateInput: root.querySelector("#reminderDateInput"),
     reminderCategoryInput: root.querySelector("#reminderCategoryInput"),
     reminderLeadDaysInput: root.querySelector("#reminderLeadDaysInput"),
     reminderNotesInput: root.querySelector("#reminderNotesInput"),
+    composeDisclosure: root.querySelector("#composeDisclosure"),
+    composeTriggers: Array.from(root.querySelectorAll("[data-open-compose]")),
     reminderCount: root.querySelector("#reminderCount"),
     reminderSummary: root.querySelector("#reminderSummary"),
     reminderList: root.querySelector("#reminderList"),
@@ -99,6 +110,48 @@ export function renderSalaryPanel(state, refs) {
   refs.salaryDaySelect.value = String(state.salary.day);
   refs.salaryAmountInput.value = state.salary.amount;
   refs.salaryAccountInput.value = state.salary.account;
+}
+
+export function renderPushPanel(state, refs, capabilities) {
+  const notification = state.salary.notification;
+  const permissionText =
+    notification.permission === "granted"
+      ? "权限已允许"
+      : notification.permission === "denied"
+        ? "权限已拒绝"
+        : "权限未请求";
+
+  refs.pushLeadDaysInput.value = String(notification.leadDays);
+  refs.pushHourInput.value = String(notification.hour);
+  refs.pushTimezoneLabel.textContent = notification.timezone;
+  refs.pushPermissionLabel.textContent = permissionText;
+  refs.pushEnableButton.textContent = notification.enabled ? "重新同步提醒" : "开启发薪提醒";
+  refs.pushEnableButton.disabled = !capabilities.supported;
+  refs.pushDisableButton.disabled = !notification.enabled && !notification.endpoint;
+
+  if (!capabilities.supported) {
+    refs.pushStatusBadge.textContent = "当前不支持";
+    refs.pushSupportNote.textContent = "这个环境不支持 Web Push。iPhone 需要把站点添加到主屏幕后，再从图标打开应用。";
+    refs.pushSyncState.textContent = "你仍然可以继续使用本地工资与到期管理，只是不会收到系统通知。";
+    return;
+  }
+
+  refs.pushSupportNote.textContent = capabilities.standalone
+    ? "当前已经是独立应用模式，可以直接申请通知权限并把发薪规则同步到云端。"
+    : "如果你是在 iPhone 上操作，请先把站点添加到主屏幕，再从主屏幕图标打开后申请通知。";
+
+  if (notification.enabled) {
+    refs.pushStatusBadge.textContent = "每月自动提醒";
+    refs.pushSyncState.textContent = notification.lastSyncedAt
+      ? `已同步到推送服务，最近一次同步时间：${formatTime(notification.lastSyncedAt)}`
+      : "已开启发薪提醒，后续修改发薪日或提醒时间时会自动重新同步。";
+    return;
+  }
+
+  refs.pushStatusBadge.textContent = notification.lastError ? "同步失败" : "未开启";
+  refs.pushSyncState.textContent = notification.lastError
+    ? notification.lastError
+    : "开启后会把发薪日、提醒时间和当前设备订阅一起同步到推送服务。";
 }
 
 export function renderWeatherPanel(state, refs) {

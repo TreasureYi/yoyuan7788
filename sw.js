@@ -1,4 +1,4 @@
-const CACHE_NAME = "yoyuan-ledger-v2";
+const CACHE_NAME = "yoyuan-ledger-v3";
 const STATIC_ASSETS = [
   "./",
   "./index.html",
@@ -12,6 +12,7 @@ const STATIC_ASSETS = [
   "./scripts/config.js",
   "./scripts/state.js",
   "./scripts/services/calendar.js",
+  "./scripts/services/push.js",
   "./scripts/services/weather.js",
   "./scripts/utils/date.js",
   "./scripts/utils/format.js",
@@ -62,3 +63,51 @@ self.addEventListener("fetch", (event) => {
     })
   );
 });
+
+self.addEventListener("push", (event) => {
+  const payload = event.data ? safeParse(event.data.text()) : {};
+  const title = payload.title || "薪期台账";
+  const body = payload.body || "新的发薪提醒已经到达。";
+
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body,
+      icon: "./assets/icons/app-icon-192.png",
+      badge: "./assets/icons/app-icon-192.png",
+      tag: payload.tag || "salary-reminder",
+      data: {
+        url: payload.url || "/"
+      }
+    })
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+
+  event.waitUntil(
+    clients.matchAll({
+      type: "window",
+      includeUncontrolled: true
+    }).then((windowClients) => {
+      const target = windowClients.find((client) => "focus" in client);
+      if (target) {
+        return target.focus();
+      }
+
+      if (clients.openWindow) {
+        return clients.openWindow(event.notification.data?.url || "/");
+      }
+
+      return undefined;
+    })
+  );
+});
+
+function safeParse(value) {
+  try {
+    return JSON.parse(value);
+  } catch (error) {
+    return {};
+  }
+}

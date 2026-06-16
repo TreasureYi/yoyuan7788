@@ -1,4 +1,5 @@
 export const STORAGE_KEY = "yoyuan-ledger:v2";
+export const INSTALLATION_KEY = "yoyuan-ledger:installation-id";
 
 export const APP_META = {
   productName: "薪期台账",
@@ -17,7 +18,17 @@ export const DEFAULT_STATE = {
   salary: {
     day: 15,
     amount: "",
-    account: ""
+    account: "",
+    notification: {
+      enabled: false,
+      leadDays: 0,
+      hour: 9,
+      timezone: "Asia/Shanghai",
+      permission: "default",
+      endpoint: "",
+      lastSyncedAt: "",
+      lastError: ""
+    }
   },
   reminders: [],
   preferences: {

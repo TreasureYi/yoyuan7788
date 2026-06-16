@@ -9,7 +9,11 @@ export function getState() {
 export function updateSalary(payload) {
   state.salary = {
     ...state.salary,
-    ...payload
+    ...payload,
+    notification: {
+      ...state.salary.notification,
+      ...(payload.notification || {})
+    }
   };
   persistState();
 }
@@ -72,7 +76,7 @@ export function buildBackupPayload() {
     {
       exportedAt: new Date().toISOString(),
       app: "yoyuan-ledger",
-      version: 2,
+      version: 3,
       data: state
     },
     null,
@@ -109,7 +113,18 @@ function normalizeState(raw) {
     salary: {
       ...base.salary,
       ...(raw?.salary || {}),
-      day: clampPayday(raw?.salary?.day)
+      day: clampPayday(raw?.salary?.day),
+      notification: {
+        ...base.salary.notification,
+        ...(raw?.salary?.notification || {}),
+        leadDays: clampLeadDays(raw?.salary?.notification?.leadDays),
+        hour: clampReminderHour(raw?.salary?.notification?.hour),
+        timezone: String(raw?.salary?.notification?.timezone || base.salary.notification.timezone),
+        permission: String(raw?.salary?.notification?.permission || base.salary.notification.permission),
+        endpoint: String(raw?.salary?.notification?.endpoint || ""),
+        lastSyncedAt: String(raw?.salary?.notification?.lastSyncedAt || ""),
+        lastError: String(raw?.salary?.notification?.lastError || "")
+      }
     },
     reminders: Array.isArray(raw?.reminders) ? raw.reminders.map(normalizeReminder) : [],
     preferences: {
@@ -142,4 +157,22 @@ function clampPayday(day) {
   }
 
   return Math.min(Math.max(Math.trunc(value), 1), 28);
+}
+
+function clampLeadDays(day) {
+  const value = Number(day);
+  if (!Number.isFinite(value)) {
+    return DEFAULT_STATE.salary.notification.leadDays;
+  }
+
+  return Math.min(Math.max(Math.trunc(value), 0), 7);
+}
+
+function clampReminderHour(hour) {
+  const value = Number(hour);
+  if (!Number.isFinite(value)) {
+    return DEFAULT_STATE.salary.notification.hour;
+  }
+
+  return Math.min(Math.max(Math.trunc(value), 0), 23);
 }
