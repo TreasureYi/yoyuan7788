@@ -36,7 +36,7 @@ export default {
 async function processEntry(entry, env) {
   const now = new Date();
   const local = getLocalParts(now, entry.timezone || "Asia/Shanghai");
-  if (local.hour !== Number(entry.reminder_hour || 9)) {
+  if (local.hour < Number(entry.reminder_hour || 9)) {
     return;
   }
 

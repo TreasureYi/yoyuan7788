@@ -16,6 +16,7 @@ import {
   enableSalaryPushNotifications,
   getCurrentPushSubscription,
   isStandaloneExperience,
+  sendLocalTestNotification,
   supportsPushNotifications,
   syncSalaryPushRule
 } from "./services/push.js";
@@ -205,6 +206,30 @@ function bindEvents(refs) {
       updateSalary({
         notification: {
           ...getState().salary.notification,
+          lastError: error.message
+        }
+      });
+    }
+
+    renderAll(refs);
+  });
+
+  refs.pushTestButton.addEventListener("click", async () => {
+    try {
+      const result = await sendLocalTestNotification();
+      updateSalary({
+        notification: {
+          ...getState().salary.notification,
+          permission: result.permission,
+          lastTestedAt: new Date().toISOString(),
+          lastError: ""
+        }
+      });
+    } catch (error) {
+      updateSalary({
+        notification: {
+          ...getState().salary.notification,
+          permission: typeof Notification === "undefined" ? "default" : Notification.permission,
           lastError: error.message
         }
       });

@@ -196,6 +196,7 @@ export function createShell() {
                 </div>
 
                 <button class="button button--secondary" type="submit">保存薪资节奏</button>
+                <p class="form-note">这里只会保存发薪日和备注。想收到 iPhone 系统提醒，还需要在下方单独点击“开启发薪提醒”。</p>
               </form>
             </article>
 
@@ -249,10 +250,11 @@ export function createShell() {
 
                 <div class="notification-panel__actions">
                   <button id="pushEnableButton" class="button button--primary" type="button">开启发薪提醒</button>
+                  <button id="pushTestButton" class="button button--secondary" type="button">发送测试通知</button>
                   <button id="pushDisableButton" class="button button--secondary" type="button">关闭提醒</button>
                 </div>
 
-                <p id="pushSyncState" class="form-note">开启后会把发薪日、提醒时间和当前设备订阅一起同步到推送服务。</p>
+                <p id="pushSyncState" class="form-note">开启后会把发薪日、提醒时间和当前设备订阅一起同步到推送服务。测试通知只验证当前设备权限与通知显示，不代表云端定时任务已经成功触发。</p>
               </div>
             </article>
 

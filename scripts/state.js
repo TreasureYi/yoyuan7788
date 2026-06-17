@@ -123,6 +123,7 @@ function normalizeState(raw) {
         permission: String(raw?.salary?.notification?.permission || base.salary.notification.permission),
         endpoint: String(raw?.salary?.notification?.endpoint || ""),
         lastSyncedAt: String(raw?.salary?.notification?.lastSyncedAt || ""),
+        lastTestedAt: String(raw?.salary?.notification?.lastTestedAt || ""),
         lastError: String(raw?.salary?.notification?.lastError || "")
       }
     },

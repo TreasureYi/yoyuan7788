@@ -27,6 +27,7 @@ export const DEFAULT_STATE = {
       permission: "default",
       endpoint: "",
       lastSyncedAt: "",
+      lastTestedAt: "",
       lastError: ""
     }
   },

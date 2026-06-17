@@ -110,6 +110,32 @@ export async function disableSalaryPushNotifications() {
   }
 }
 
+export async function sendLocalTestNotification() {
+  if (!supportsPushNotifications()) {
+    throw new Error("当前环境不支持推送通知");
+  }
+
+  const permission = await Notification.requestPermission();
+  if (permission !== "granted") {
+    throw new Error(permission === "denied" ? "通知权限已被拒绝" : "需要先允许通知权限");
+  }
+
+  const registration = await navigator.serviceWorker.ready;
+  await registration.showNotification("发薪提醒测试", {
+    body: "这是一条本机测试通知。如果你看到了它，说明当前设备的通知权限和 PWA 通知能力已经正常。",
+    icon: "./assets/icons/app-icon-192.png",
+    badge: "./assets/icons/app-icon-192.png",
+    tag: "salary-test",
+    data: {
+      url: "/"
+    }
+  });
+
+  return {
+    permission
+  };
+}
+
 async function fetchPublicKey() {
   const response = await fetch(PUSH_PUBLIC_KEY_ENDPOINT, {
     headers: {

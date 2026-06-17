@@ -37,6 +37,7 @@ export function createRefs(root) {
     pushTimezoneLabel: root.querySelector("#pushTimezoneLabel"),
     pushPermissionLabel: root.querySelector("#pushPermissionLabel"),
     pushEnableButton: root.querySelector("#pushEnableButton"),
+    pushTestButton: root.querySelector("#pushTestButton"),
     pushDisableButton: root.querySelector("#pushDisableButton"),
     pushSyncState: root.querySelector("#pushSyncState"),
     reminderForm: root.querySelector("#reminderForm"),
@@ -127,6 +128,7 @@ export function renderPushPanel(state, refs, capabilities) {
   refs.pushPermissionLabel.textContent = permissionText;
   refs.pushEnableButton.textContent = notification.enabled ? "重新同步提醒" : "开启发薪提醒";
   refs.pushEnableButton.disabled = !capabilities.supported;
+  refs.pushTestButton.disabled = !capabilities.supported;
   refs.pushDisableButton.disabled = !notification.enabled && !notification.endpoint;
 
   if (!capabilities.supported) {
@@ -142,15 +144,20 @@ export function renderPushPanel(state, refs, capabilities) {
 
   if (notification.enabled) {
     refs.pushStatusBadge.textContent = "每月自动提醒";
-    refs.pushSyncState.textContent = notification.lastSyncedAt
+    const syncText = notification.lastSyncedAt
       ? `已同步到推送服务，最近一次同步时间：${formatTime(notification.lastSyncedAt)}`
       : "已开启发薪提醒，后续修改发薪日或提醒时间时会自动重新同步。";
+    refs.pushSyncState.textContent = notification.lastTestedAt
+      ? `${syncText} 最近一次本机测试通知：${formatTime(notification.lastTestedAt)}`
+      : syncText;
     return;
   }
 
   refs.pushStatusBadge.textContent = notification.lastError ? "同步失败" : "未开启";
   refs.pushSyncState.textContent = notification.lastError
-    ? notification.lastError
+    ? notification.lastTestedAt
+      ? `${notification.lastError} 最近一次本机测试通知：${formatTime(notification.lastTestedAt)}`
+      : notification.lastError
     : "开启后会把发薪日、提醒时间和当前设备订阅一起同步到推送服务。";
 }
 
