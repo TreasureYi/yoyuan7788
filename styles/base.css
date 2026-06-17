@@ -57,44 +57,16 @@ a {
   border: 0;
 }
 
-.page-noise,
-.page-orb {
+.page-noise {
   position: fixed;
   inset: 0;
   pointer-events: none;
-}
-
-.page-noise {
-  opacity: 0.08;
+  opacity: 0.06;
   background-image:
-    linear-gradient(rgba(23, 49, 77, 0.08) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(23, 49, 77, 0.08) 1px, transparent 1px);
+    linear-gradient(rgba(23, 49, 77, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(23, 49, 77, 0.06) 1px, transparent 1px);
   background-size: 56px 56px;
-  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.4), transparent 72%);
-}
-
-.page-orb::before,
-.page-orb::after {
-  content: "";
-  position: absolute;
-  border-radius: 999px;
-  filter: blur(14px);
-}
-
-.page-orb::before {
-  top: -110px;
-  left: -40px;
-  width: 320px;
-  height: 320px;
-  background: radial-gradient(circle, rgba(45, 108, 141, 0.2), rgba(45, 108, 141, 0));
-}
-
-.page-orb::after {
-  right: -20px;
-  bottom: 120px;
-  width: 280px;
-  height: 280px;
-  background: radial-gradient(circle, rgba(35, 86, 109, 0.2), rgba(35, 86, 109, 0));
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.3), transparent 72%);
 }
 
 .eyebrow {
@@ -106,171 +78,8 @@ a {
   text-transform: uppercase;
 }
 
-.panel {
-  position: relative;
-  overflow: hidden;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-3xl);
-  background: var(--surface);
-  box-shadow: var(--shadow-lg);
-}
-
-.panel::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.4), transparent 36%);
-  pointer-events: none;
-}
-
-.button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.55rem;
-  min-height: 44px;
-  padding: 0.78rem 1.05rem;
-  border: 1px solid transparent;
-  border-radius: var(--radius-lg);
-  font-weight: 700;
-  transition:
-    transform 160ms ease,
-    border-color 160ms ease,
-    background-color 160ms ease,
-    color 160ms ease,
-    box-shadow 160ms ease;
-}
-
-.button:hover,
-.button:focus-visible {
-  transform: translateY(-1px);
-}
-
-.button:focus-visible,
-.input:focus-visible,
-.textarea:focus-visible,
-.select:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 4px rgba(45, 108, 141, 0.16);
-}
-
-.button--primary {
-  color: var(--text-inverse);
-  background: var(--surface-dark);
-  box-shadow: var(--shadow-md);
-}
-
-.button--secondary {
-  color: var(--text);
-  background: rgba(255, 255, 255, 0.92);
-  border-color: var(--line);
-}
-
-.button--ghost {
-  color: var(--accent-strong);
-  background: rgba(45, 108, 141, 0.08);
-  border-color: rgba(45, 108, 141, 0.12);
-}
-
-.button--link {
-  min-height: auto;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--accent-strong);
-}
-
-.button--danger {
-  color: var(--danger);
-}
-
-.input,
-.select,
-.textarea {
-  width: 100%;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-md);
-  background: rgba(255, 255, 255, 0.96);
-  color: var(--text);
-}
-
-.input,
-.select {
-  min-height: 48px;
-  padding: 0.85rem 1rem;
-}
-
-.textarea {
-  min-height: 112px;
-  padding: 0.9rem 1rem;
-  resize: vertical;
-}
-
-.field {
-  display: grid;
-  gap: 0.45rem;
-}
-
-.field__label {
-  font-size: 0.88rem;
-  font-weight: 700;
-}
-
-.section-title {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: clamp(1.35rem, 1.8vw, 1.9rem);
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-}
-
-.section-copy {
-  margin: 0;
-  color: var(--text-muted);
-  line-height: 1.7;
-}
-
-.empty-state,
-.error-state,
-.loading-state {
-  display: grid;
-  gap: 0.4rem;
-  padding: 1rem;
-  border-radius: var(--radius-lg);
-  background: var(--surface-muted);
-  border: 1px solid var(--line);
-}
-
-.empty-state__title,
-.error-state__title {
-  margin: 0;
-  font-weight: 700;
-}
-
-.empty-state__copy,
-.error-state__copy,
-.loading-state__copy {
-  margin: 0;
-  color: var(--text-muted);
-  line-height: 1.6;
-}
-
-@keyframes fade-up {
-  from {
-    opacity: 0;
-    transform: translateY(14px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+  *, *::before, *::after {
     animation: none !important;
     transition: none !important;
     scroll-behavior: auto !important;
