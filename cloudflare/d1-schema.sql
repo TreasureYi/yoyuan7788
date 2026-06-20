@@ -19,3 +19,10 @@ CREATE TABLE IF NOT EXISTS salary_push_subscriptions (
 
 CREATE INDEX IF NOT EXISTS idx_salary_push_enabled
   ON salary_push_subscriptions (enabled, reminder_hour);
+
+CREATE TABLE IF NOT EXISTS encrypted_user_backups (
+  sync_id TEXT PRIMARY KEY,
+  encrypted_data TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);

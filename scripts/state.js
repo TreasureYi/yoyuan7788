@@ -71,6 +71,41 @@ export function setWeatherFailure(city, message) {
   persistState();
 }
 
+export function replaceSyncedData(payload) {
+  const normalized = normalizeState({
+    ...state,
+    salary: {
+      ...state.salary,
+      ...(payload?.salary || {}),
+      notification: {
+        ...state.salary.notification,
+        leadDays: payload?.salary?.notification?.leadDays ?? state.salary.notification.leadDays
+      }
+    },
+    reminders: Array.isArray(payload?.reminders) ? payload.reminders : state.reminders
+  });
+
+  state.salary = normalized.salary;
+  state.reminders = normalized.reminders;
+  persistState();
+}
+
+export function getSyncSnapshot() {
+  return {
+    version: 1,
+    salary: {
+      day: state.salary.day,
+      amount: state.salary.amount,
+      account: state.salary.account,
+      notification: {
+        leadDays: state.salary.notification.leadDays
+      }
+    },
+    reminders: state.reminders,
+    updatedAt: new Date().toISOString()
+  };
+}
+
 function loadState() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -88,6 +123,7 @@ function loadState() {
 
 function persistState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  window.dispatchEvent(new CustomEvent("yoyuan:state-changed"));
 }
 
 function cloneDefaultState() {

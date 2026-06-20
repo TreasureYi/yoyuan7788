@@ -46,7 +46,20 @@ export function createRefs(root) {
     boardPanel: root.querySelector("#board"),
     reminderFilters: root.querySelector(".filters"),
     filters: Array.from(root.querySelectorAll("[data-filter]")),
-    overviewWeather: root.querySelector("#overviewWeather")
+    overviewWeather: Array.from(root.querySelectorAll("[data-weather-slot]")),
+    overviewMonth: root.querySelector("#overviewMonth"),
+    salaryReminderDate: root.querySelector("#salaryReminderDate"),
+    salaryReminderState: root.querySelector("#salaryReminderState"),
+    reminderSummaryValue: root.querySelector("#reminderSummaryValue"),
+    reminderSummaryMeta: root.querySelector("#reminderSummaryMeta"),
+    cloudStatusBadge: root.querySelector("#cloudStatusBadge"),
+    cloudCreateButton: root.querySelector("#cloudCreateButton"),
+    cloudCopyButton: root.querySelector("#cloudCopyButton"),
+    cloudForgetButton: root.querySelector("#cloudForgetButton"),
+    cloudRestoreButton: root.querySelector("#cloudRestoreButton"),
+    recoveryCodeDisplay: root.querySelector("#recoveryCodeDisplay"),
+    recoveryCodeInput: root.querySelector("#recoveryCodeInput"),
+    cloudSyncState: root.querySelector("#cloudSyncState")
   };
 }
 
@@ -69,14 +82,34 @@ export function populateSalaryOptions(select, currentDay) {
 
 export function renderDashboard(state, refs) {
   refs.todayLabel.textContent = formatDateWithWeekday(new Date());
+  if (refs.overviewMonth) {
+    refs.overviewMonth.textContent = new Intl.DateTimeFormat("zh-CN", {
+      year: "numeric",
+      month: "long"
+    }).format(new Date());
+  }
+
+  if (refs.reminderSummaryValue && refs.reminderSummaryMeta) {
+    const upcoming = state.reminders.filter((entry) => getDaysUntil(entry.date) >= 0);
+    refs.reminderSummaryValue.textContent = String(upcoming.length);
+    refs.reminderSummaryMeta.textContent = upcoming.length ? "件待办事项" : "暂时没有待办";
+  }
 }
 
 export function renderSalaryPanel(state, refs) {
   const nextSalaryDate = getNextSalaryDate(state.salary.day);
   const daysUntil = getDaysUntil(nextSalaryDate);
+  const reminderDate = new Date(nextSalaryDate);
+  reminderDate.setDate(reminderDate.getDate() - state.salary.notification.leadDays);
 
   refs.salaryStatus.textContent = `每月 ${state.salary.day} 日`;
   refs.salaryDate.textContent = formatDateWithWeekday(nextSalaryDate);
+  if (refs.salaryReminderDate) {
+    refs.salaryReminderDate.textContent = formatDateLong(reminderDate);
+  }
+  if (refs.salaryReminderState) {
+    refs.salaryReminderState.textContent = state.salary.notification.enabled ? "已开启" : "未开启";
+  }
   refs.salaryAmountDisplay.textContent = formatAmount(state.salary.amount);
   refs.salaryAccountDisplay.textContent = formatAccount(state.salary.account);
 
@@ -158,12 +191,16 @@ export function renderPushPanel(state, refs, capabilities) {
 }
 
 export function renderOverviewWeather(state, refs) {
-  if (!refs.overviewWeather) {
+  if (!refs.overviewWeather?.length) {
     return;
   }
 
+  refs.overviewWeather.forEach((slot) => renderWeatherSlot(state, slot));
+}
+
+function renderWeatherSlot(state, slot) {
   if (state.weather.status === "loading") {
-    refs.overviewWeather.innerHTML = `
+    slot.innerHTML = `
       <div class="weather-peek__content">
         <span class="weather-peek__icon weather-widget__icon--loading" aria-hidden="true">${getWeatherIconSvg(null)}</span>
         <span>定位中</span>
@@ -173,7 +210,7 @@ export function renderOverviewWeather(state, refs) {
   }
 
   if (state.weather.status === "error") {
-    refs.overviewWeather.innerHTML = `
+    slot.innerHTML = `
       <button class="weather-peek__content" data-refresh-weather type="button">
         <span class="weather-peek__icon" aria-hidden="true">${getWeatherIconSvg(null)}</span>
         <span>重试</span>
@@ -183,7 +220,7 @@ export function renderOverviewWeather(state, refs) {
   }
 
   if (!state.weather.payload) {
-    refs.overviewWeather.innerHTML = `
+    slot.innerHTML = `
       <button class="weather-peek__content" data-refresh-weather type="button">
         <span class="weather-peek__icon" aria-hidden="true">${getWeatherIconSvg(null)}</span>
         <span>定位</span>
@@ -193,7 +230,7 @@ export function renderOverviewWeather(state, refs) {
   }
 
   const payload = state.weather.payload;
-  refs.overviewWeather.innerHTML = `
+  slot.innerHTML = `
     <button class="weather-peek__content" data-refresh-weather type="button" aria-label="刷新当前位置天气">
       <span class="weather-peek__icon" aria-hidden="true">${getWeatherIconSvg(payload.weatherCode)}</span>
       <strong>${formatTemperature(payload.temperature)}</strong>

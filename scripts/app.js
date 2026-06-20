@@ -2,7 +2,9 @@ import { APP_META, REMINDER_FILTERS } from "./config.js";
 import {
   addReminder,
   deleteReminder,
+  getSyncSnapshot,
   getState,
+  replaceSyncedData,
   setReminderFilter,
   setWeatherFailure,
   setWeatherPending,
@@ -19,6 +21,14 @@ import {
   supportsPushNotifications,
   syncSalaryPushRule
 } from "./services/push.js";
+import {
+  createCloudBackup,
+  forgetCloudBackupOnDevice,
+  getRecoveryCode,
+  hasCloudBackup,
+  restoreCloudBackup,
+  syncCloudBackup
+} from "./services/sync.js";
 import { fetchWeatherReportByCoordinates } from "./services/weather.js";
 import {
   createRefs,
@@ -32,6 +42,9 @@ import {
 import { createShell } from "./views/shell.js";
 
 let activeView = "overview";
+let cloudSyncTimer = null;
+let cloudSyncPaused = false;
+let cloudStatusText = "";
 
 boot();
 
@@ -49,7 +62,8 @@ function boot() {
   registerServiceWorker();
   hydratePushSubscription(refs);
   hydrateDefaultWeather(refs, state);
-
+  hydrateCloudBackup(refs);
+  window.addEventListener("yoyuan:state-changed", () => scheduleCloudSync(refs));
 }
 
 function bindEvents(refs) {
@@ -84,6 +98,69 @@ function bindEvents(refs) {
     });
     renderAll(refs);
     syncExistingPushSubscription(refs);
+  });
+
+  refs.cloudCreateButton.addEventListener("click", async () => {
+    setCloudStatus(refs, "正在创建加密备份…");
+    refs.cloudCreateButton.disabled = true;
+    try {
+      const recoveryCode = await createCloudBackup(getSyncSnapshot());
+      refs.recoveryCodeInput.value = recoveryCode;
+      setCloudStatus(refs, "云端备份已开启，请立即保存恢复码。");
+    } catch (error) {
+      setCloudStatus(refs, error.message);
+    } finally {
+      refs.cloudCreateButton.disabled = false;
+      renderCloudPanel(refs);
+    }
+  });
+
+  refs.cloudRestoreButton.addEventListener("click", async () => {
+    const recoveryCode = refs.recoveryCodeInput.value.trim();
+    if (!recoveryCode) {
+      setCloudStatus(refs, "请先输入恢复码");
+      return;
+    }
+
+    setCloudStatus(refs, "正在从云端恢复…");
+    refs.cloudRestoreButton.disabled = true;
+    try {
+      const result = await restoreCloudBackup(recoveryCode);
+      cloudSyncPaused = true;
+      replaceSyncedData(result.snapshot);
+      cloudSyncPaused = false;
+      renderAll(refs);
+      setCloudStatus(refs, "云端数据已恢复到这台设备。");
+    } catch (error) {
+      cloudSyncPaused = false;
+      setCloudStatus(refs, error.message);
+    } finally {
+      refs.cloudRestoreButton.disabled = false;
+      renderCloudPanel(refs);
+    }
+  });
+
+  refs.cloudCopyButton.addEventListener("click", async () => {
+    const recoveryCode = getRecoveryCode();
+    if (!recoveryCode) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(recoveryCode);
+      setCloudStatus(refs, "恢复码已复制，请保存到密码管理器。");
+    } catch (error) {
+      refs.recoveryCodeInput.value = recoveryCode;
+      refs.recoveryCodeInput.select();
+      setCloudStatus(refs, "请长按复制恢复码并妥善保存。");
+    }
+  });
+
+  refs.cloudForgetButton.addEventListener("click", () => {
+    forgetCloudBackupOnDevice();
+    refs.recoveryCodeInput.value = "";
+    setCloudStatus(refs, "这台设备已停止云同步，云端加密备份仍保留。");
+    renderCloudPanel(refs);
   });
 
   refs.reminderForm.addEventListener("submit", (event) => {
@@ -241,6 +318,7 @@ function renderAll(refs) {
   renderPushPanel(state, refs, getPushCapabilities());
   renderOverviewWeather(state, refs);
   renderReminderBoard(state, refs);
+  renderCloudPanel(refs);
   syncViewState(refs);
 }
 
@@ -302,11 +380,103 @@ function registerServiceWorker() {
     return;
   }
 
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js").catch((error) => {
-      console.warn("Service worker registration failed", error);
-    });
+  const hadController = Boolean(navigator.serviceWorker.controller);
+  let updateReloading = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (!hadController || updateReloading) {
+      return;
+    }
+
+    updateReloading = true;
+    window.location.reload();
   });
+
+  window.addEventListener("load", async () => {
+    try {
+      const registration = await navigator.serviceWorker.register("./sw.js", {
+        updateViaCache: "none"
+      });
+      await registration.update();
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") {
+          registration.update().catch(() => {});
+        }
+      });
+    } catch (error) {
+      console.warn("Service worker registration failed", error);
+    }
+  });
+}
+
+async function hydrateCloudBackup(refs) {
+  renderCloudPanel(refs);
+  if (!hasCloudBackup()) {
+    return;
+  }
+
+  try {
+    if (hasMeaningfulLocalData(getState())) {
+      await syncCloudBackup(getSyncSnapshot());
+      setCloudStatus(refs, "本机数据已同步到云端。");
+      return;
+    }
+
+    const result = await restoreCloudBackup(getRecoveryCode());
+    cloudSyncPaused = true;
+    replaceSyncedData(result.snapshot);
+    cloudSyncPaused = false;
+    renderAll(refs);
+    setCloudStatus(refs, "已自动恢复云端数据。");
+  } catch (error) {
+    cloudSyncPaused = false;
+    setCloudStatus(refs, navigator.onLine ? error.message : "当前离线，将继续使用本机数据。");
+  }
+}
+
+function scheduleCloudSync(refs) {
+  if (cloudSyncPaused || !hasCloudBackup()) {
+    return;
+  }
+
+  window.clearTimeout(cloudSyncTimer);
+  cloudSyncTimer = window.setTimeout(async () => {
+    try {
+      await syncCloudBackup(getSyncSnapshot());
+      setCloudStatus(refs, "已自动同步到云端。");
+    } catch (error) {
+      setCloudStatus(refs, navigator.onLine ? error.message : "当前离线，联网后再次修改即可同步。");
+    }
+  }, 800);
+}
+
+function renderCloudPanel(refs) {
+  const recoveryCode = getRecoveryCode();
+  const enabled = Boolean(recoveryCode);
+
+  refs.cloudStatusBadge.textContent = enabled ? "已开启" : "未开启";
+  refs.cloudCreateButton.hidden = enabled;
+  refs.cloudCopyButton.hidden = !enabled;
+  refs.cloudForgetButton.hidden = !enabled;
+  refs.recoveryCodeDisplay.hidden = !enabled;
+  refs.recoveryCodeDisplay.textContent = enabled ? recoveryCode : "";
+  refs.recoveryCodeInput.placeholder = enabled ? "输入其他恢复码可切换备份" : "输入已有恢复码";
+  refs.cloudSyncState.textContent =
+    cloudStatusText || (enabled ? "数据修改后会自动加密同步。" : "开启后会生成唯一恢复码。");
+}
+
+function setCloudStatus(refs, message) {
+  cloudStatusText = message;
+  refs.cloudSyncState.textContent = message;
+}
+
+function hasMeaningfulLocalData(state) {
+  return Boolean(
+    state.reminders.length ||
+      state.salary.amount ||
+      state.salary.account ||
+      state.salary.day !== 15 ||
+      state.salary.notification.leadDays
+  );
 }
 
 async function hydratePushSubscription(refs) {

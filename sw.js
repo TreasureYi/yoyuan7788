@@ -1,4 +1,4 @@
-const CACHE_NAME = "yoyuan-ledger-v9";
+const CACHE_NAME = "yoyuan-ledger-v11";
 const STATIC_ASSETS = [
   "./",
   "./index.html",
@@ -8,11 +8,13 @@ const STATIC_ASSETS = [
   "./styles/base.css",
   "./styles/layout.css",
   "./styles/components.css",
+  "./styles/serene.css",
   "./scripts/app.js",
   "./scripts/config.js",
   "./scripts/state.js",
   "./scripts/services/calendar.js",
   "./scripts/services/push.js",
+  "./scripts/services/sync.js",
   "./scripts/services/weather.js",
   "./scripts/utils/date.js",
   "./scripts/utils/format.js",
@@ -43,25 +45,12 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  event.respondWith(
-    caches.match(event.request).then((cached) => {
-      if (cached) {
-        return cached;
-      }
+  const requestUrl = new URL(event.request.url);
+  if (requestUrl.origin !== self.location.origin) {
+    return;
+  }
 
-      return fetch(event.request)
-        .then((response) => {
-          if (!response || response.status !== 200) {
-            return response;
-          }
-
-          const cloned = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, cloned));
-          return response;
-        })
-        .catch(() => caches.match("./index.html"));
-    })
-  );
+  event.respondWith(networkFirst(event.request));
 });
 
 self.addEventListener("push", (event) => {
@@ -109,5 +98,27 @@ function safeParse(value) {
     return JSON.parse(value);
   } catch (error) {
     return {};
+  }
+}
+
+async function networkFirst(request) {
+  try {
+    const response = await fetch(request, { cache: "no-store" });
+    if (response?.ok) {
+      const cache = await caches.open(CACHE_NAME);
+      cache.put(request, response.clone());
+    }
+    return response;
+  } catch (error) {
+    const cached = await caches.match(request);
+    if (cached) {
+      return cached;
+    }
+
+    if (request.mode === "navigate") {
+      return caches.match("./index.html");
+    }
+
+    throw error;
   }
 }
