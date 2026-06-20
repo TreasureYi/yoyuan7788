@@ -1,7 +1,6 @@
 import { APP_META, REMINDER_FILTERS } from "./config.js";
 import {
   addReminder,
-  buildBackupPayload,
   deleteReminder,
   getState,
   setReminderFilter,
@@ -10,7 +9,7 @@ import {
   setWeatherSuccess,
   updateSalary
 } from "./state.js";
-import { exportBoardCalendar, exportSingleReminder, downloadText } from "./services/calendar.js";
+import { exportSingleReminder } from "./services/calendar.js";
 import {
   disableSalaryPushNotifications,
   enableSalaryPushNotifications,
@@ -32,7 +31,6 @@ import {
 } from "./views/render.js";
 import { createShell } from "./views/shell.js";
 
-let deferredInstallPrompt = null;
 let activeView = "overview";
 
 boot();
@@ -52,11 +50,6 @@ function boot() {
   hydratePushSubscription(refs);
   hydrateDefaultWeather(refs, state);
 
-  window.addEventListener("beforeinstallprompt", (event) => {
-    event.preventDefault();
-    deferredInstallPrompt = event;
-    refs.installButton.textContent = "立即安装";
-  });
 }
 
 function bindEvents(refs) {
@@ -109,26 +102,6 @@ function bindEvents(refs) {
     refs.reminderLeadDaysInput.value = "3";
     renderAll(refs);
     setActiveView(refs, "overview");
-  });
-
-  refs.installButton.addEventListener("click", async () => {
-    if (deferredInstallPrompt) {
-      deferredInstallPrompt.prompt();
-      await deferredInstallPrompt.userChoice;
-      deferredInstallPrompt = null;
-      refs.installButton.textContent = "安装已触发";
-      return;
-    }
-
-    refs.installButton.textContent = "请在 Safari 中分享并添加";
-  });
-
-  refs.calendarExportButton.addEventListener("click", () => {
-    exportBoardCalendar(getState());
-  });
-
-  refs.backupExportButton.addEventListener("click", () => {
-    downloadText("yoyuan-ledger-backup.json", buildBackupPayload(), "application/json;charset=utf-8");
   });
 
   refs.pushEnableButton.addEventListener("click", async () => {

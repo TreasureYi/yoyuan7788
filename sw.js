@@ -1,4 +1,4 @@
-const CACHE_NAME = "yoyuan-ledger-v7";
+const CACHE_NAME = "yoyuan-ledger-v9";
 const STATIC_ASSETS = [
   "./",
   "./index.html",
@@ -18,10 +18,10 @@ const STATIC_ASSETS = [
   "./scripts/utils/format.js",
   "./scripts/views/render.js",
   "./scripts/views/shell.js",
-  "./assets/icons/app-icon.svg",
-  "./assets/icons/app-icon-192.png",
-  "./assets/icons/app-icon-512.png",
-  "./assets/icons/apple-touch-icon.png"
+  "./assets/icons/app-icon-v3.svg",
+  "./assets/icons/app-icon-v3-192.png",
+  "./assets/icons/app-icon-v3-512.png",
+  "./assets/icons/apple-touch-icon-v3.png"
 ];
 
 self.addEventListener("install", (event) => {
@@ -72,8 +72,8 @@ self.addEventListener("push", (event) => {
   event.waitUntil(
     self.registration.showNotification(title, {
       body,
-      icon: "./assets/icons/app-icon-192.png",
-      badge: "./assets/icons/app-icon-192.png",
+      icon: "./assets/icons/app-icon-v3-192.png",
+      badge: "./assets/icons/app-icon-v3-192.png",
       tag: payload.tag || "salary-reminder",
       data: {
         url: payload.url || "/"

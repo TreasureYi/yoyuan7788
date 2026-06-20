@@ -119,8 +119,8 @@ export async function sendLocalTestNotification() {
   const registration = await navigator.serviceWorker.ready;
   await registration.showNotification("发薪提醒测试", {
     body: "这是一条本机测试通知。如果你看到了它，说明当前设备的通知权限和 PWA 通知能力已经正常。",
-    icon: "./assets/icons/app-icon-192.png",
-    badge: "./assets/icons/app-icon-192.png",
+    icon: "./assets/icons/app-icon-v3-192.png",
+    badge: "./assets/icons/app-icon-v3-192.png",
     tag: "salary-test",
     data: {
       url: "/"

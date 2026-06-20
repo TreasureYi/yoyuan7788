@@ -1,35 +1,3 @@
-import { buildSalaryAgenda } from "../utils/date.js";
-
-export function exportBoardCalendar(state) {
-  const salaryEntries = buildSalaryAgenda(state.salary.day, 6).map((entry) => ({
-    ...entry,
-    category: "收入",
-    notes:
-      [state.salary.amount ? `金额：${state.salary.amount}` : "", state.salary.account ? `账户：${state.salary.account}` : ""]
-        .filter(Boolean)
-        .join(" / ") || entry.notes
-  }));
-
-  const payload = createCalendarPayload([
-    ...state.reminders.map((entry) => ({
-      id: entry.id,
-      title: entry.title,
-      date: entry.date,
-      category: entry.category,
-      notes: entry.notes
-    })),
-    ...salaryEntries.map((entry) => ({
-      id: entry.id,
-      title: entry.title,
-      date: entry.date,
-      category: entry.category,
-      notes: entry.notes
-    }))
-  ]);
-
-  downloadBlob("yoyuan-ledger.ics", payload, "text/calendar;charset=utf-8");
-}
-
 export function exportSingleReminder(reminder) {
   const payload = createCalendarPayload([
     {
@@ -42,10 +10,6 @@ export function exportSingleReminder(reminder) {
   ]);
 
   downloadBlob(`${slugify(reminder.title)}.ics`, payload, "text/calendar;charset=utf-8");
-}
-
-export function downloadText(name, contents, mimeType) {
-  downloadBlob(name, contents, mimeType);
 }
 
 function createCalendarPayload(entries) {

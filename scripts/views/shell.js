@@ -198,23 +198,6 @@ export function createShell() {
             </article>
           </section>
 
-          <section class="settings-section">
-            <div class="settings-section__head">
-              <h2 class="settings-section__title">工具</h2>
-            </div>
-
-            <article class="settings-group utility-row">
-              <button id="installButton" class="utility-action utility-action--primary" type="button">
-                <span class="utility-action__title">安装到主屏幕</span>
-              </button>
-              <button id="calendarExportButton" class="utility-action" type="button">
-                <span class="utility-action__title">导出日历</span>
-              </button>
-              <button id="backupExportButton" class="utility-action" type="button">
-                <span class="utility-action__title">导出备份</span>
-              </button>
-            </article>
-          </section>
         </section>
       </main>
 

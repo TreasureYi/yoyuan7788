@@ -71,19 +71,6 @@ export function setWeatherFailure(city, message) {
   persistState();
 }
 
-export function buildBackupPayload() {
-  return JSON.stringify(
-    {
-      exportedAt: new Date().toISOString(),
-      app: "yoyuan-ledger",
-      version: 3,
-      data: state
-    },
-    null,
-    2
-  );
-}
-
 function loadState() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
