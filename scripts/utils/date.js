@@ -47,13 +47,13 @@ export function formatTime(value) {
 
 export function getNextSalaryDate(dayOfMonth, reference = new Date()) {
   const current = startOfDay(reference);
-  const candidate = startOfDay(new Date(reference.getFullYear(), reference.getMonth(), dayOfMonth));
+  const candidate = getSalaryExecutionDate(reference.getFullYear(), reference.getMonth(), dayOfMonth);
 
   if (candidate >= current) {
     return candidate;
   }
 
-  return startOfDay(new Date(reference.getFullYear(), reference.getMonth() + 1, dayOfMonth));
+  return getSalaryExecutionDate(reference.getFullYear(), reference.getMonth() + 1, dayOfMonth);
 }
 
 export function getDaysUntil(value, reference = new Date()) {
@@ -72,6 +72,25 @@ export function formatCountdown(days) {
   }
 
   return `${days} 天`;
+}
+
+export function getSalaryCycleProgress(dayOfMonth, reference = new Date()) {
+  const nextSalaryDate = getNextSalaryDate(dayOfMonth, reference);
+  const daysUntil = getDaysUntil(nextSalaryDate, reference);
+
+  if (daysUntil <= 0) {
+    return 1;
+  }
+
+  const current = startOfDay(reference);
+  let lastSalaryDate = getSalaryExecutionDate(reference.getFullYear(), reference.getMonth(), dayOfMonth);
+
+  if (lastSalaryDate >= current) {
+    lastSalaryDate = getSalaryExecutionDate(reference.getFullYear(), reference.getMonth() - 1, dayOfMonth);
+  }
+
+  const totalDays = Math.max(1, Math.ceil((startOfDay(nextSalaryDate) - lastSalaryDate) / DAY_MS));
+  return Math.min(1, Math.max(0, (totalDays - daysUntil) / totalDays));
 }
 
 export function getReminderTone(days) {
@@ -95,7 +114,7 @@ export function buildSalaryAgenda(dayOfMonth, count = 4) {
   const now = new Date();
 
   for (let index = 0; index < count; index += 1) {
-    const candidate = new Date(now.getFullYear(), now.getMonth() + index, dayOfMonth);
+    const candidate = getSalaryExecutionDate(now.getFullYear(), now.getMonth() + index, dayOfMonth);
     items.push({
       id: `salary-${formatLocalDateInput(candidate)}`,
       type: "salary",
@@ -125,4 +144,23 @@ export function buildAgendaItems(reminders, salaryDay, count = 8) {
     })
     .sort((left, right) => left.date.localeCompare(right.date))
     .slice(0, count);
+}
+
+function getSalaryExecutionDate(year, month, dayOfMonth) {
+  const candidate = startOfDay(new Date(year, month, dayOfMonth));
+  return moveWeekendBackward(candidate);
+}
+
+function moveWeekendBackward(date) {
+  const day = date.getDay();
+
+  if (day === 6) {
+    return startOfDay(new Date(date.getFullYear(), date.getMonth(), date.getDate() - 1));
+  }
+
+  if (day === 0) {
+    return startOfDay(new Date(date.getFullYear(), date.getMonth(), date.getDate() - 2));
+  }
+
+  return date;
 }

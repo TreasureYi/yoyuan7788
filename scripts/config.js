@@ -2,8 +2,8 @@ export const STORAGE_KEY = "yoyuan-ledger:v2";
 export const INSTALLATION_KEY = "yoyuan-ledger:installation-id";
 
 export const APP_META = {
-  productName: "薪期台账",
-  descriptor: "Payroll & Due Desk"
+  productName: "我的薪期",
+  descriptor: "My payday notes"
 };
 
 export const REMINDER_CATEGORIES = ["账单", "会员", "证件", "合同", "家庭", "其他"];

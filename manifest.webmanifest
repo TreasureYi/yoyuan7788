@@ -1,11 +1,11 @@
 {
-  "name": "薪期台账",
+  "name": "我的薪期",
   "short_name": "薪期",
   "description": "一个面向个人长期使用的薪资与到期管理 PWA。",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ede6dd",
-  "theme_color": "#13263f",
+  "background_color": "#f0eef6",
+  "theme_color": "#f0eef6",
   "lang": "zh-CN",
   "icons": [
     {

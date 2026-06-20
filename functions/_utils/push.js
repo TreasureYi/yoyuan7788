@@ -5,8 +5,6 @@ export function normalizePushPayload(payload) {
   const auth = String(payload?.subscription?.keys?.auth || "").trim();
   const salaryDay = clampInteger(payload?.salaryDay, 1, 28, 15);
   const leadDays = clampInteger(payload?.leadDays, 0, 7, 0);
-  const reminderHour = clampInteger(payload?.reminderHour, 0, 23, 9);
-  const timezone = String(payload?.timezone || "Asia/Shanghai").trim() || "Asia/Shanghai";
   const permission = String(payload?.permission || "default").trim() || "default";
   const appName = String(payload?.appName || "薪期台账").trim() || "薪期台账";
 
@@ -17,8 +15,6 @@ export function normalizePushPayload(payload) {
     auth,
     salaryDay,
     leadDays,
-    reminderHour,
-    timezone,
     permission,
     appName
   };

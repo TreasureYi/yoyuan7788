@@ -30,14 +30,14 @@
 - 前端 PWA 负责：
   - 申请通知权限
   - 注册 push subscription
-  - 同步发薪日、提前提醒天数、提醒时间
+  - 同步发薪日、提前提醒天数
 - Cloudflare Pages Functions 负责：
   - 提供 VAPID 公钥
   - 保存 / 关闭设备订阅
 - Cloudflare D1 负责：
   - 存储每台设备的发薪提醒规则
 - 独立 Cloudflare Worker + Cron 负责：
-  - 每小时检查一次哪些设备到了提醒时间
+  - 每天北京时间早上 9 点检查一次哪些设备到了提醒日
   - 按月循环发送 Web Push
 
 ## Cloudflare 配置

@@ -1,4 +1,4 @@
-const CACHE_NAME = "yoyuan-ledger-v3";
+const CACHE_NAME = "yoyuan-ledger-v7";
 const STATIC_ASSETS = [
   "./",
   "./index.html",
@@ -66,7 +66,7 @@ self.addEventListener("fetch", (event) => {
 
 self.addEventListener("push", (event) => {
   const payload = event.data ? safeParse(event.data.text()) : {};
-  const title = payload.title || "薪期台账";
+  const title = payload.title || "我的薪期";
   const body = payload.body || "新的发薪提醒已经到达。";
 
   event.waitUntil(

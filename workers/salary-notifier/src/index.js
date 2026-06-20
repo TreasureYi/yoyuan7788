@@ -1,6 +1,8 @@
 import webpush from "web-push";
 
 const DAY_MS = 86400000;
+const FIXED_TIMEZONE = "Asia/Shanghai";
+const FIXED_REMINDER_HOUR = 9;
 
 export default {
   async scheduled(controller, env, ctx) {
@@ -35,8 +37,8 @@ export default {
 
 async function processEntry(entry, env) {
   const now = new Date();
-  const local = getLocalParts(now, entry.timezone || "Asia/Shanghai");
-  if (local.hour < Number(entry.reminder_hour || 9)) {
+  const local = getLocalParts(now, FIXED_TIMEZONE);
+  if (local.hour < FIXED_REMINDER_HOUR) {
     return;
   }
 
@@ -119,22 +121,14 @@ function getLocalParts(date, timeZone) {
 }
 
 function getNextSalaryParts(local, salaryDay) {
-  const candidate = {
-    year: local.year,
-    month: local.month,
-    day: salaryDay
-  };
+  const candidate = getSalaryExecutionParts(local.year, local.month, salaryDay);
 
-  if (local.day <= salaryDay) {
+  if (compareParts(candidate, local) >= 0) {
     return candidate;
   }
 
   const rolled = new Date(Date.UTC(local.year, local.month, 1));
-  return {
-    year: rolled.getUTCFullYear(),
-    month: rolled.getUTCMonth() + 1,
-    day: salaryDay
-  };
+  return getSalaryExecutionParts(rolled.getUTCFullYear(), rolled.getUTCMonth() + 1, salaryDay);
 }
 
 function daysBetween(start, end) {
@@ -145,6 +139,37 @@ function daysBetween(start, end) {
 
 function toCycleKey(parts) {
   return `${parts.year}-${String(parts.month).padStart(2, "0")}-${String(parts.day).padStart(2, "0")}`;
+}
+
+function getSalaryExecutionParts(year, month, salaryDay) {
+  const candidate = new Date(Date.UTC(year, month - 1, salaryDay));
+  const adjusted = moveWeekendBackward(candidate);
+
+  return {
+    year: adjusted.getUTCFullYear(),
+    month: adjusted.getUTCMonth() + 1,
+    day: adjusted.getUTCDate()
+  };
+}
+
+function moveWeekendBackward(date) {
+  const day = date.getUTCDay();
+
+  if (day === 6) {
+    return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() - 1));
+  }
+
+  if (day === 0) {
+    return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() - 2));
+  }
+
+  return date;
+}
+
+function compareParts(left, right) {
+  const leftUtc = Date.UTC(left.year, left.month - 1, left.day);
+  const rightUtc = Date.UTC(right.year, right.month - 1, right.day);
+  return leftUtc - rightUtc;
 }
 
 function buildReminderBody(daysUntil, targetSalary) {

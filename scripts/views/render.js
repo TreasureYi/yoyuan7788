@@ -1,6 +1,5 @@
-import { REMINDER_FILTERS, WEATHER_CODES } from "../config.js";
+import { REMINDER_FILTERS } from "../config.js";
 import {
-  buildAgendaItems,
   formatCountdown,
   formatDateLong,
   formatDateWithWeekday,
@@ -13,16 +12,17 @@ import { escapeHtml, formatAccount, formatAmount, formatTemperature } from "../u
 
 export function createRefs(root) {
   return {
+    views: Array.from(root.querySelectorAll("[data-view]")),
+    tabButtons: Array.from(root.querySelectorAll("[data-tab-button]")),
+    pushSummaryValue: root.querySelector("#pushSummaryValue"),
+    pushSummaryMeta: root.querySelector("#pushSummaryMeta"),
     todayLabel: root.querySelector("#todayLabel"),
-    storageState: root.querySelector("#storageState"),
-    metricNextSalary: root.querySelector("#metricNextSalary"),
-    metricNextReminder: root.querySelector("#metricNextReminder"),
-    metricOverdue: root.querySelector("#metricOverdue"),
     installButton: root.querySelector("#installButton"),
     calendarExportButton: root.querySelector("#calendarExportButton"),
     backupExportButton: root.querySelector("#backupExportButton"),
     salaryStatus: root.querySelector("#salaryStatus"),
     salaryCountdown: root.querySelector("#salaryCountdown"),
+    salaryCountdownUnit: root.querySelector("#salaryCountdownUnit"),
     salaryDate: root.querySelector("#salaryDate"),
     salaryAmountDisplay: root.querySelector("#salaryAmountDisplay"),
     salaryAccountDisplay: root.querySelector("#salaryAccountDisplay"),
@@ -33,8 +33,6 @@ export function createRefs(root) {
     pushStatusBadge: root.querySelector("#pushStatusBadge"),
     pushSupportNote: root.querySelector("#pushSupportNote"),
     pushLeadDaysInput: root.querySelector("#pushLeadDaysInput"),
-    pushHourInput: root.querySelector("#pushHourInput"),
-    pushTimezoneLabel: root.querySelector("#pushTimezoneLabel"),
     pushPermissionLabel: root.querySelector("#pushPermissionLabel"),
     pushEnableButton: root.querySelector("#pushEnableButton"),
     pushTestButton: root.querySelector("#pushTestButton"),
@@ -46,17 +44,12 @@ export function createRefs(root) {
     reminderCategoryInput: root.querySelector("#reminderCategoryInput"),
     reminderLeadDaysInput: root.querySelector("#reminderLeadDaysInput"),
     reminderNotesInput: root.querySelector("#reminderNotesInput"),
-    composeDisclosure: root.querySelector("#composeDisclosure"),
-    composeTriggers: Array.from(root.querySelectorAll("[data-open-compose]")),
     reminderCount: root.querySelector("#reminderCount"),
-    reminderSummary: root.querySelector("#reminderSummary"),
     reminderList: root.querySelector("#reminderList"),
+    boardPanel: root.querySelector("#board"),
+    reminderFilters: root.querySelector(".filters"),
     filters: Array.from(root.querySelectorAll("[data-filter]")),
-    weatherForm: root.querySelector("#weatherForm"),
-    cityInput: root.querySelector("#cityInput"),
-    weatherState: root.querySelector("#weatherState"),
-    weatherCard: root.querySelector("#weatherCard"),
-    agendaList: root.querySelector("#agendaList")
+    overviewWeather: root.querySelector("#overviewWeather")
   };
 }
 
@@ -78,35 +71,30 @@ export function populateSalaryOptions(select, currentDay) {
 }
 
 export function renderDashboard(state, refs) {
-  const nextSalaryDate = getNextSalaryDate(state.salary.day);
-  const sorted = getSortedReminders(state.reminders);
-  const overdueCount = state.reminders.filter((entry) => getDaysUntil(entry.date) < 0).length;
-  const soonCount = state.reminders.filter((entry) => {
-    const days = getDaysUntil(entry.date);
-    return days >= 0 && days <= 7;
-  }).length;
-  const nextReminder = sorted.find((entry) => getDaysUntil(entry.date) >= 0) || sorted[0];
-
   refs.todayLabel.textContent = formatDateWithWeekday(new Date());
-  refs.storageState.textContent = state.reminders.length
-    ? `已保存 ${state.reminders.length} 条事项${state.preferences.city ? `，天气城市：${state.preferences.city}` : ""}，支持本地备份和日历导出。`
-    : "当前还没有记录，建议先补齐常用账单、证件和会员节点。";
-  refs.metricNextSalary.textContent = formatDateWithWeekday(nextSalaryDate);
-  refs.metricNextReminder.textContent = nextReminder
-    ? `${nextReminder.title} · ${formatCountdown(getDaysUntil(nextReminder.date))}`
-    : "暂无项目";
-  refs.metricOverdue.textContent = overdueCount ? `逾期 ${overdueCount} 条` : soonCount ? `7 天内 ${soonCount} 条` : "状态正常";
 }
 
 export function renderSalaryPanel(state, refs) {
   const nextSalaryDate = getNextSalaryDate(state.salary.day);
   const daysUntil = getDaysUntil(nextSalaryDate);
 
-  refs.salaryStatus.textContent = daysUntil === 0 ? "今天发薪" : `每月 ${state.salary.day} 日`;
-  refs.salaryCountdown.textContent = formatCountdown(daysUntil);
-  refs.salaryDate.textContent = formatDateLong(nextSalaryDate);
+  refs.salaryStatus.textContent = `每月 ${state.salary.day} 日`;
+  refs.salaryDate.textContent = formatDateWithWeekday(nextSalaryDate);
   refs.salaryAmountDisplay.textContent = formatAmount(state.salary.amount);
   refs.salaryAccountDisplay.textContent = formatAccount(state.salary.account);
+
+  if (refs.salaryCountdown && refs.salaryCountdownUnit) {
+    if (daysUntil === 0) {
+      refs.salaryCountdown.textContent = "0";
+      refs.salaryCountdownUnit.textContent = "今天";
+    } else if (daysUntil < 0) {
+      refs.salaryCountdown.textContent = String(Math.abs(daysUntil));
+      refs.salaryCountdownUnit.textContent = "天前";
+    } else {
+      refs.salaryCountdown.textContent = String(daysUntil);
+      refs.salaryCountdownUnit.textContent = "天";
+    }
+  }
 
   refs.salaryDaySelect.value = String(state.salary.day);
   refs.salaryAmountInput.value = state.salary.amount;
@@ -123,30 +111,41 @@ export function renderPushPanel(state, refs, capabilities) {
         : "权限未请求";
 
   refs.pushLeadDaysInput.value = String(notification.leadDays);
-  refs.pushHourInput.value = String(notification.hour);
-  refs.pushTimezoneLabel.textContent = notification.timezone;
   refs.pushPermissionLabel.textContent = permissionText;
   refs.pushEnableButton.textContent = notification.enabled ? "重新同步提醒" : "开启发薪提醒";
   refs.pushEnableButton.disabled = !capabilities.supported;
   refs.pushTestButton.disabled = !capabilities.supported;
   refs.pushDisableButton.disabled = !notification.enabled && !notification.endpoint;
 
+  if (refs.pushSummaryValue && refs.pushSummaryMeta) {
+    refs.pushSummaryValue.textContent = !capabilities.supported
+      ? "不支持"
+      : notification.enabled
+        ? "已开启"
+        : notification.lastError
+          ? "失败"
+          : "未开启";
+    refs.pushSummaryMeta.textContent = notification.enabled
+      ? `${notification.leadDays} 天前 · 每天 09:00`
+      : "中国区固定 09:00";
+  }
+
   if (!capabilities.supported) {
     refs.pushStatusBadge.textContent = "当前不支持";
-    refs.pushSupportNote.textContent = "这个环境不支持 Web Push。iPhone 需要把站点添加到主屏幕后，再从图标打开应用。";
-    refs.pushSyncState.textContent = "你仍然可以继续使用本地工资与到期管理，只是不会收到系统通知。";
+    refs.pushSupportNote.textContent = "当前环境不支持推送。";
+    refs.pushSyncState.textContent = "不影响本地记录和看板使用。";
     return;
   }
 
   refs.pushSupportNote.textContent = capabilities.standalone
-    ? "当前已经是独立应用模式，可以直接申请通知权限并把发薪规则同步到云端。"
-    : "如果你是在 iPhone 上操作，请先把站点添加到主屏幕，再从主屏幕图标打开后申请通知。";
+    ? "可直接申请通知权限。"
+    : "iPhone 需先添加到主屏幕后再申请通知。";
 
   if (notification.enabled) {
     refs.pushStatusBadge.textContent = "每月自动提醒";
     const syncText = notification.lastSyncedAt
       ? `已同步到推送服务，最近一次同步时间：${formatTime(notification.lastSyncedAt)}`
-      : "已开启发薪提醒，后续修改发薪日或提醒时间时会自动重新同步。";
+      : "已开启发薪提醒。";
     refs.pushSyncState.textContent = notification.lastTestedAt
       ? `${syncText} 最近一次本机测试通知：${formatTime(notification.lastTestedAt)}`
       : syncText;
@@ -158,89 +157,66 @@ export function renderPushPanel(state, refs, capabilities) {
     ? notification.lastTestedAt
       ? `${notification.lastError} 最近一次本机测试通知：${formatTime(notification.lastTestedAt)}`
       : notification.lastError
-    : "开启后会把发薪日、提醒时间和当前设备订阅一起同步到推送服务。";
+    : "开启后会同步当前设备的发薪提醒。";
 }
 
-export function renderWeatherPanel(state, refs) {
-  refs.cityInput.value = state.preferences.city;
+export function renderOverviewWeather(state, refs) {
+  if (!refs.overviewWeather) {
+    return;
+  }
 
   if (state.weather.status === "loading") {
-    refs.weatherState.textContent = "查询中";
-    refs.weatherCard.innerHTML = `
-      <div class="loading-state">
-        <p class="loading-state__copy">正在读取天气服务，请稍等片刻...</p>
+    refs.overviewWeather.innerHTML = `
+      <div class="weather-peek__content">
+        <span class="weather-peek__icon weather-widget__icon--loading" aria-hidden="true">${getWeatherIconSvg(null)}</span>
+        <span>定位中</span>
       </div>
     `;
     return;
   }
 
   if (state.weather.status === "error") {
-    refs.weatherState.textContent = "失败";
-    refs.weatherCard.innerHTML = `
-      <div class="error-state">
-        <p class="error-state__title">天气读取失败</p>
-        <p class="error-state__copy">${escapeHtml(state.weather.error || "服务不可用")}</p>
-      </div>
+    refs.overviewWeather.innerHTML = `
+      <button class="weather-peek__content" data-refresh-weather type="button">
+        <span class="weather-peek__icon" aria-hidden="true">${getWeatherIconSvg(null)}</span>
+        <span>重试</span>
+      </button>
     `;
     return;
   }
 
   if (!state.weather.payload) {
-    refs.weatherState.textContent = "未查询";
-    refs.weatherCard.innerHTML = `
-      <div class="empty-state">
-        <p class="empty-state__title">这里会显示你关注城市的天气</p>
-        <p class="empty-state__copy">它被放在侧边辅助区，只在需要时补充当天体感，不干扰主看板的任务扫描。</p>
-      </div>
+    refs.overviewWeather.innerHTML = `
+      <button class="weather-peek__content" data-refresh-weather type="button">
+        <span class="weather-peek__icon" aria-hidden="true">${getWeatherIconSvg(null)}</span>
+        <span>定位</span>
+      </button>
     `;
     return;
   }
 
   const payload = state.weather.payload;
-  refs.weatherState.textContent = `已更新 ${formatTime(state.weather.updatedAt)}`;
-  refs.weatherCard.innerHTML = `
-    <div class="weather-card__top">
-      <div>
-        <p class="eyebrow">${escapeHtml(payload.country || "")}</p>
-        <h3 class="section-title">${escapeHtml(payload.city)}</h3>
-      </div>
-      <strong class="weather-card__temp">${formatTemperature(payload.temperature)}</strong>
-    </div>
-    <p class="weather-card__summary">
-      ${escapeHtml(WEATHER_CODES[payload.weatherCode] || "天气稳定")}，体感约 ${escapeHtml(formatTemperature(payload.apparentTemperature))}。
-    </p>
-    <div class="weather-metrics">
-      <article class="weather-metric">
-        <span class="weather-metric__label">体感</span>
-        <strong class="weather-metric__value">${escapeHtml(formatTemperature(payload.apparentTemperature))}</strong>
-      </article>
-      <article class="weather-metric">
-        <span class="weather-metric__label">风速</span>
-        <strong class="weather-metric__value">${escapeHtml(String(Math.round(Number(payload.windSpeed || 0))))} km/h</strong>
-      </article>
-      <article class="weather-metric">
-        <span class="weather-metric__label">状态</span>
-        <strong class="weather-metric__value">${escapeHtml(WEATHER_CODES[payload.weatherCode] || "正常")}</strong>
-      </article>
-    </div>
+  refs.overviewWeather.innerHTML = `
+    <button class="weather-peek__content" data-refresh-weather type="button" aria-label="刷新当前位置天气">
+      <span class="weather-peek__icon" aria-hidden="true">${getWeatherIconSvg(payload.weatherCode)}</span>
+      <strong>${formatTemperature(payload.temperature)}</strong>
+      <span>${escapeHtml(payload.city)}</span>
+    </button>
   `;
 }
 
 export function renderReminderBoard(state, refs) {
   const sorted = getSortedReminders(state.reminders);
   const filtered = applyFilter(sorted, state.preferences.reminderFilter);
-  const overdueCount = sorted.filter((entry) => getDaysUntil(entry.date) < 0).length;
-  const soonCount = sorted.filter((entry) => {
-    const days = getDaysUntil(entry.date);
-    return days >= 0 && days <= 7;
-  }).length;
 
   refs.reminderCount.textContent = `${filtered.length} 条`;
-  refs.reminderSummary.textContent = overdueCount
-    ? `当前有 ${overdueCount} 条逾期项目`
-    : soonCount
-      ? `未来 7 天有 ${soonCount} 条事项需要关注`
-      : "目前没有紧急事项";
+  refs.reminderCount.hidden = sorted.length === 0;
+  if (refs.boardPanel) {
+    refs.boardPanel.hidden = false;
+  }
+  if (refs.reminderFilters) {
+    refs.reminderFilters.hidden = sorted.length < 4;
+  }
 
   refs.filters.forEach((button) => {
     button.classList.toggle("is-active", button.dataset.filter === state.preferences.reminderFilter);
@@ -248,9 +224,8 @@ export function renderReminderBoard(state, refs) {
 
   if (!filtered.length) {
     refs.reminderList.innerHTML = `
-      <div class="empty-state">
-        <p class="empty-state__title">当前筛选下没有事项</p>
-        <p class="empty-state__copy">你可以先新增一条账单、会员或证件提醒，让看板进入真实使用状态。</p>
+      <div class="empty-state empty-state--quiet">
+        <p class="empty-state__title">${sorted.length ? "这里没有事项" : "还没有提醒"}</p>
       </div>
     `;
     return;
@@ -263,20 +238,21 @@ export function renderReminderBoard(state, refs) {
       const notes = entry.notes || "没有备注";
       const schedule =
         days < 0
-          ? `${formatDateLong(entry.date)} · 已逾期 ${Math.abs(days)} 天`
+          ? `${formatDateLong(entry.date)} · 逾期 ${Math.abs(days)} 天`
           : days === 0
-            ? `${formatDateLong(entry.date)} · 就是今天`
-            : `${formatDateLong(entry.date)} · 还有 ${days} 天`;
+            ? `${formatDateLong(entry.date)} · 今天`
+            : `${formatDateLong(entry.date)} · ${days} 天后`;
 
       return `
         <article class="reminder-item reminder-item--${tone}">
-          <div>
+          <div class="reminder-item__icon" aria-hidden="true">${getCategoryIcon(entry.category)}</div>
+          <div class="reminder-item__body">
             <div class="reminder-item__title-row">
               <span class="badge">${escapeHtml(entry.category)}</span>
               <h3 class="reminder-item__title">${escapeHtml(entry.title)}</h3>
             </div>
-            <p class="reminder-item__meta">${escapeHtml(schedule)} · 提前 ${escapeHtml(String(entry.leadDays))} 天准备</p>
-            <p class="reminder-item__notes">${escapeHtml(notes)}</p>
+            <p class="reminder-item__meta">${escapeHtml(schedule)}</p>
+            ${entry.notes ? `<p class="reminder-item__notes">${escapeHtml(notes)}</p>` : ""}
           </div>
 
           <div class="reminder-item__side">
@@ -286,40 +262,6 @@ export function renderReminderBoard(state, refs) {
               <button class="button button--link button--danger" data-action="delete" data-id="${escapeHtml(entry.id)}" type="button">删除</button>
             </div>
           </div>
-        </article>
-      `;
-    })
-    .join("");
-}
-
-export function renderAgenda(state, refs) {
-  const items = buildAgendaItems(state.reminders, state.salary.day, 8);
-
-  if (!items.length) {
-    refs.agendaList.innerHTML = `
-      <div class="empty-state">
-        <p class="empty-state__title">时间线会在这里出现</p>
-        <p class="empty-state__copy">当你录入事项后，这里会自动把发薪节点和到期节点混排成一条更适合浏览的日历式序列。</p>
-      </div>
-    `;
-    return;
-  }
-
-  refs.agendaList.innerHTML = items
-    .map((entry) => {
-      const typeLabel = entry.type === "salary" ? "薪资" : "到期";
-      const note = entry.type === "salary" ? "月度薪资节奏" : entry.notes || "待处理事项";
-      return `
-        <article class="agenda-item">
-          <div class="agenda-item__meta-row">
-            <span class="agenda-item__type">${typeLabel}</span>
-            <span class="agenda-item__date">${escapeHtml(formatDateWithWeekday(entry.date))}</span>
-          </div>
-          <div class="agenda-item__title-row">
-            ${entry.category ? `<span class="badge">${escapeHtml(entry.category)}</span>` : ""}
-            <h3 class="agenda-item__title">${escapeHtml(entry.title)}</h3>
-          </div>
-          <p class="agenda-item__notes">${escapeHtml(note)}</p>
         </article>
       `;
     })
@@ -343,4 +285,45 @@ function applyFilter(reminders, filter) {
   }
 
   return reminders;
+}
+
+function getWeatherIconSvg(code) {
+  if (code === null || code === undefined) {
+    return `<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M14 32a8 8 0 1 1 0-16 7 7 0 0 1 13.5 2.5A6 6 0 1 1 34 32H14z"/></svg>`;
+  }
+
+  if (code === 0 || code === 1) {
+    return `<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="24" cy="24" r="8"/><path d="M24 6v4M24 38v4M6 24h4M38 24h4M10.9 10.9l2.8 2.8M34.3 34.3l2.8 2.8M10.9 37.1l2.8-2.8M34.3 13.7l2.8-2.8"/></svg>`;
+  }
+
+  if (code <= 3) {
+    return `<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M14 34a8 8 0 1 1 0-16 7 7 0 0 1 13.5 2.5A6 6 0 1 1 34 34H14z"/></svg>`;
+  }
+
+  if (code <= 48) {
+    return `<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M14 30a8 8 0 1 1 0-16 7 7 0 0 1 13.5 2.5A6 6 0 1 1 34 30H14z"/><path d="M10 38h28M16 42h16"/></svg>`;
+  }
+
+  if (code <= 67 || (code >= 80 && code <= 82)) {
+    return `<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M14 28a8 8 0 1 1 0-16 7 7 0 0 1 13.5 2.5A6 6 0 1 1 34 28H14z"/><path d="M22 32v10M30 32v10M18 36h16"/></svg>`;
+  }
+
+  if (code <= 77) {
+    return `<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M14 28a8 8 0 1 1 0-16 7 7 0 0 1 13.5 2.5A6 6 0 1 1 34 28H14z"/><circle cx="20" cy="36" r="1.5" fill="currentColor"/><circle cx="28" cy="40" r="1.5" fill="currentColor"/><circle cx="36" cy="36" r="1.5" fill="currentColor"/></svg>`;
+  }
+
+  return `<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M14 28a8 8 0 1 1 0-16 7 7 0 0 1 13.5 2.5A6 6 0 1 1 34 28H14z"/><path d="M26 32l-4 8M30 32l4 8"/></svg>`;
+}
+
+function getCategoryIcon(category) {
+  const icons = {
+    账单: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>`,
+    会员: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
+    证件: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M15 9h4M15 13h4"/></svg>`,
+    合同: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h4"/></svg>`,
+    家庭: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>`,
+    其他: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>`
+  };
+
+  return icons[category] || icons.其他;
 }

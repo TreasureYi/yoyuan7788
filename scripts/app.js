@@ -20,20 +20,20 @@ import {
   supportsPushNotifications,
   syncSalaryPushRule
 } from "./services/push.js";
-import { fetchWeatherReport } from "./services/weather.js";
+import { fetchWeatherReportByCoordinates } from "./services/weather.js";
 import {
   createRefs,
   populateSalaryOptions,
-  renderAgenda,
   renderDashboard,
+  renderOverviewWeather,
   renderPushPanel,
   renderReminderBoard,
-  renderSalaryPanel,
-  renderWeatherPanel
+  renderSalaryPanel
 } from "./views/render.js";
 import { createShell } from "./views/shell.js";
 
 let deferredInstallPrompt = null;
+let activeView = "overview";
 
 boot();
 
@@ -50,6 +50,7 @@ function boot() {
   renderAll(refs);
   registerServiceWorker();
   hydratePushSubscription(refs);
+  hydrateDefaultWeather(refs, state);
 
   window.addEventListener("beforeinstallprompt", (event) => {
     event.preventDefault();
@@ -59,14 +60,24 @@ function boot() {
 }
 
 function bindEvents(refs) {
-  refs.composeTriggers.forEach((button) => {
-    button.addEventListener("click", () => {
-      refs.composeDisclosure?.setAttribute("open", "");
-      refs.composeDisclosure?.scrollIntoView({
-        behavior: "smooth",
-        block: "start"
-      });
-    });
+  const root = document.querySelector("#app");
+
+  root?.addEventListener("click", (event) => {
+    const weatherButton = event.target instanceof Element ? event.target.closest("[data-refresh-weather]") : null;
+    if (weatherButton) {
+      refreshWeather(refs);
+      return;
+    }
+
+    const button = event.target instanceof Element ? event.target.closest("[data-switch-view]") : null;
+    if (!button) {
+      return;
+    }
+    const nextView = button.dataset.switchView;
+    if (!nextView) {
+      return;
+    }
+    setActiveView(refs, nextView);
   });
 
   refs.salaryForm.addEventListener("submit", (event) => {
@@ -97,29 +108,7 @@ function bindEvents(refs) {
     refs.reminderCategoryInput.value = "账单";
     refs.reminderLeadDaysInput.value = "3";
     renderAll(refs);
-    refs.composeDisclosure?.setAttribute("open", "");
-  });
-
-  refs.weatherForm.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    const city = refs.cityInput.value.trim();
-    if (!city) {
-      refs.cityInput.focus();
-      return;
-    }
-
-    setWeatherPending(city);
-    renderWeatherPanel(getState(), refs);
-
-    try {
-      const payload = await fetchWeatherReport(city);
-      setWeatherSuccess(city, payload);
-    } catch (error) {
-      setWeatherFailure(city, error.message);
-    }
-
-    renderWeatherPanel(getState(), refs);
-    renderDashboard(getState(), refs);
+    setActiveView(refs, "overview");
   });
 
   refs.installButton.addEventListener("click", async () => {
@@ -158,9 +147,7 @@ function bindEvents(refs) {
     try {
       const result = await enableSalaryPushNotifications({
         day: state.salary.day,
-        leadDays: nextNotification.leadDays,
-        hour: nextNotification.hour,
-        timezone: nextNotification.timezone
+        leadDays: nextNotification.leadDays
       });
 
       updateSalary({
@@ -279,9 +266,62 @@ function renderAll(refs) {
   renderDashboard(state, refs);
   renderSalaryPanel(state, refs);
   renderPushPanel(state, refs, getPushCapabilities());
-  renderWeatherPanel(state, refs);
+  renderOverviewWeather(state, refs);
   renderReminderBoard(state, refs);
-  renderAgenda(state, refs);
+  syncViewState(refs);
+}
+
+async function hydrateDefaultWeather(refs, state) {
+  if (!shouldAutoRefreshWeather(state)) {
+    return;
+  }
+
+  try {
+    await refreshWeather(refs);
+  } catch (error) {
+    console.warn("Default weather hydration failed", error);
+  }
+}
+
+async function refreshWeather(refs) {
+  const label = "当前位置";
+  setWeatherPending(label);
+  renderAll(refs);
+
+  try {
+    const payload = await fetchWeatherFromCurrentPosition();
+    setWeatherSuccess(payload.city || label, payload);
+  } catch (error) {
+    setWeatherFailure(label, error.message);
+  }
+
+  renderAll(refs);
+}
+
+function setActiveView(refs, nextView, { scroll = true } = {}) {
+  activeView = nextView;
+  syncViewState(refs);
+
+  if (scroll) {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+  }
+}
+
+function syncViewState(refs) {
+  refs.views.forEach((view) => {
+    const isActive = view.dataset.view === activeView;
+    view.hidden = !isActive;
+    view.classList.toggle("is-active", isActive);
+  });
+
+  refs.tabButtons.forEach((button) => {
+    const isActive = button.dataset.switchView === activeView;
+    button.classList.toggle("is-active", isActive);
+    button.setAttribute("aria-selected", String(isActive));
+  });
 }
 
 function registerServiceWorker() {
@@ -340,9 +380,7 @@ async function syncExistingPushSubscription(refs) {
   try {
     const result = await syncSalaryPushRule({
       day: getState().salary.day,
-      leadDays: notification.leadDays,
-      hour: notification.hour,
-      timezone: notification.timezone
+      leadDays: notification.leadDays
     });
 
     if (result?.endpoint) {
@@ -370,8 +408,8 @@ async function syncExistingPushSubscription(refs) {
 function getNotificationFormState(refs) {
   return {
     leadDays: Number(refs.pushLeadDaysInput.value) || 0,
-    hour: Number(refs.pushHourInput.value) || 9,
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Shanghai",
+    hour: 9,
+    timezone: "Asia/Shanghai",
     permission: typeof Notification === "undefined" ? "default" : Notification.permission
   };
 }
@@ -381,4 +419,35 @@ function getPushCapabilities() {
     supported: supportsPushNotifications(),
     standalone: typeof window !== "undefined" ? isStandaloneExperience() : false
   };
+}
+
+function shouldAutoRefreshWeather(state) {
+  if (state.weather?.status !== "ready" || state.weather?.payload?.country !== "自动定位") {
+    return true;
+  }
+
+  const updatedAt = new Date(state.weather?.updatedAt || 0).getTime();
+  return Date.now() - updatedAt > 30 * 60 * 1000;
+}
+
+async function fetchWeatherFromCurrentPosition() {
+  if (typeof navigator === "undefined" || !navigator.geolocation) {
+    throw new Error("当前设备不支持定位");
+  }
+
+  const position = await new Promise((resolve, reject) => {
+    navigator.geolocation.getCurrentPosition(resolve, reject, {
+      enableHighAccuracy: false,
+      timeout: 10000,
+      maximumAge: 10 * 60 * 1000
+    });
+  }).catch((error) => {
+    if (error?.code === 1) {
+      throw new Error("请允许位置权限");
+    }
+
+    throw new Error("暂时无法定位");
+  });
+
+  return fetchWeatherReportByCoordinates(position.coords.latitude, position.coords.longitude);
 }
