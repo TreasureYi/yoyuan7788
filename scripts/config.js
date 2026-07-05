@@ -1,10 +1,12 @@
 export const STORAGE_KEY = "yoyuan-ledger:v2";
 export const INSTALLATION_KEY = "yoyuan-ledger:installation-id";
 export const RECOVERY_CODE_KEY = "yoyuan-ledger:recovery-code";
+export const APP_VERSION = "20260705.1";
 
 export const APP_META = {
   productName: "我的薪期",
-  descriptor: "My payday notes"
+  descriptor: "My payday notes",
+  version: APP_VERSION
 };
 
 export const REMINDER_CATEGORIES = ["账单", "会员", "证件", "合同", "家庭", "其他"];

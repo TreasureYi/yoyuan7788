@@ -247,6 +247,10 @@ export function createShell() {
               <div>
                 <h2>更新应用不需要删除主屏幕图标</h2>
                 <p>联网打开应用时会检查新版本，新代码接管后自动刷新一次。本机数据不会因为代码更新而清空。</p>
+                <div class="maintenance-actions">
+                  <button id="clearAppCacheButton" class="button button--secondary" type="button">清理缓存并重载</button>
+                  <span id="appMaintenanceState" class="form-note">遇到图标或页面异常时使用。</span>
+                </div>
               </div>
             </article>
           </section>

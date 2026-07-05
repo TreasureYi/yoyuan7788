@@ -59,7 +59,9 @@ export function createRefs(root) {
     cloudRestoreButton: root.querySelector("#cloudRestoreButton"),
     recoveryCodeDisplay: root.querySelector("#recoveryCodeDisplay"),
     recoveryCodeInput: root.querySelector("#recoveryCodeInput"),
-    cloudSyncState: root.querySelector("#cloudSyncState")
+    cloudSyncState: root.querySelector("#cloudSyncState"),
+    clearAppCacheButton: root.querySelector("#clearAppCacheButton"),
+    appMaintenanceState: root.querySelector("#appMaintenanceState")
   };
 }
 

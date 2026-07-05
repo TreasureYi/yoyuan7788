@@ -1425,6 +1425,18 @@ button.weather-peek__content {
   gap: 0.55rem;
 }
 
+.maintenance-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+  margin-top: 0.9rem;
+}
+
+.maintenance-actions .form-note {
+  flex: 1 1 180px;
+}
+
 .weather-card {
   display: grid;
   gap: 0.6rem;

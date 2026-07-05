@@ -163,6 +163,10 @@ function bindEvents(refs) {
     renderCloudPanel(refs);
   });
 
+  refs.clearAppCacheButton?.addEventListener("click", async () => {
+    await clearAppCacheAndReload(refs);
+  });
+
   refs.reminderForm.addEventListener("submit", (event) => {
     event.preventDefault();
 
@@ -406,6 +410,44 @@ function registerServiceWorker() {
       console.warn("Service worker registration failed", error);
     }
   });
+}
+
+async function clearAppCacheAndReload(refs) {
+  const button = refs.clearAppCacheButton;
+  const stateLabel = refs.appMaintenanceState;
+  if (button) {
+    button.disabled = true;
+  }
+  if (stateLabel) {
+    stateLabel.textContent = "正在清理缓存...";
+  }
+
+  try {
+    if ("caches" in window) {
+      const cacheNames = await caches.keys();
+      await Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName)));
+    }
+
+    if ("serviceWorker" in navigator) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(registrations.map((registration) => registration.unregister()));
+    }
+
+    if (stateLabel) {
+      stateLabel.textContent = "缓存已清理，正在重新加载。";
+    }
+
+    const url = new URL(window.location.href);
+    url.searchParams.set("refresh", String(Date.now()));
+    window.location.replace(url.toString());
+  } catch (error) {
+    if (button) {
+      button.disabled = false;
+    }
+    if (stateLabel) {
+      stateLabel.textContent = `清理失败：${error.message}`;
+    }
+  }
 }
 
 async function hydrateCloudBackup(refs) {

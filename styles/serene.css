@@ -403,6 +403,7 @@ body {
 .data-note__icon svg { width: 23px; height: 23px; }
 .data-note h2 { margin: 0; font-family: var(--font-display); font-size: 1rem; }
 .data-note p { margin: 5px 0 0; color: var(--text-muted); font-size: .78rem; line-height: 1.55; }
+.maintenance-actions .button { background: #fff8fa; }
 .recovery-code {
   margin-top: 22px;
   padding: 16px;
