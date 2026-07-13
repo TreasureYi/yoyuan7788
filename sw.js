@@ -1,4 +1,4 @@
-const APP_VERSION = "20260705.1";
+const APP_VERSION = "20260713.2";
 const CACHE_NAME = `yoyuan-ledger-${APP_VERSION}`;
 const STATIC_ASSETS = [
   "./",
@@ -56,8 +56,8 @@ self.addEventListener("fetch", (event) => {
 
 self.addEventListener("push", (event) => {
   const payload = event.data ? safeParse(event.data.text()) : {};
-  const title = payload.title || "我的薪期";
-  const body = payload.body || "新的发薪提醒已经到达。";
+  const title = payload.title || "薪期提醒";
+  const body = payload.body || "一条新的提醒已经到达。";
 
   event.waitUntil(
     self.registration.showNotification(title, {

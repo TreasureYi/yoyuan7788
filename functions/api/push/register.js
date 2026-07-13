@@ -63,7 +63,7 @@ export async function onRequestPost(context) {
       payload.auth,
       payload.salaryDay,
       payload.leadDays,
-      9,
+      payload.reminderHour,
       "Asia/Shanghai",
       payload.permission,
       payload.appName,

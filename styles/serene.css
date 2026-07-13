@@ -326,9 +326,22 @@ body {
 .filter { background: rgba(255,255,255,.75); }
 .filter.is-active { color: white; background: var(--accent-strong); }
 .reminder-item { border-color: var(--line); background: rgba(255,255,255,.72); }
+.reminder-item__notification {
+  margin: 5px 0 0;
+  color: var(--accent-strong);
+  font-size: .7rem;
+  font-weight: 700;
+}
 
 .form-card { grid-column: 1 / -1; padding: clamp(20px, 4vw, 30px); }
 .view--compose .form-card, .view--weather .journal-card { margin-top: 26px; }
+.view--compose .form-card {
+  max-width: 720px;
+  margin-right: auto;
+  background:
+    radial-gradient(circle at 100% 0, rgba(255, 216, 231, .5), transparent 17rem),
+    rgba(255, 253, 253, .96);
+}
 .stack-form { margin-top: 22px; }
 .field__label { color: var(--accent-strong); }
 .input, .select, .textarea {
@@ -341,6 +354,58 @@ body {
   box-shadow: 0 0 0 3px rgba(139, 67, 103, .11);
 }
 .field--short { max-width: 240px; }
+.reminder-timing {
+  display: grid;
+  gap: 16px;
+  margin: 2px 0;
+  padding: 18px;
+  border: 1px solid rgba(111, 44, 79, .13);
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(255, 240, 245, .88), rgba(255, 253, 253, .88));
+}
+.reminder-timing legend {
+  padding: 0 7px;
+  color: var(--accent-strong);
+  font-size: .74rem;
+  font-weight: 800;
+  letter-spacing: .06em;
+}
+.reminder-switch {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-height: 46px;
+  cursor: pointer;
+}
+.reminder-switch input { position: absolute; opacity: 0; pointer-events: none; }
+.reminder-switch__control {
+  position: relative;
+  width: 42px;
+  height: 25px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: #d8cbd1;
+  transition: background .2s ease;
+}
+.reminder-switch__control::after {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 19px;
+  height: 19px;
+  content: "";
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(70, 30, 48, .22);
+  transition: transform .2s ease;
+}
+.reminder-switch input:checked + .reminder-switch__control { background: var(--accent-strong); }
+.reminder-switch input:checked + .reminder-switch__control::after { transform: translateX(17px); }
+.reminder-switch input:focus-visible + .reminder-switch__control { outline: 3px solid rgba(139, 67, 103, .22); outline-offset: 3px; }
+.reminder-switch strong, .reminder-switch small { display: block; }
+.reminder-switch strong { color: var(--accent-strong); font-size: .88rem; }
+.reminder-switch small { margin-top: 2px; color: var(--text-muted); font-size: .71rem; }
+.timing-hint { margin: -2px 0 0; color: var(--text-muted); font-size: .72rem; line-height: 1.5; }
 .button { border-radius: 999px; }
 .button--primary { border-color: var(--accent-strong); background: var(--accent-strong); }
 .button--secondary { border-color: var(--line-strong); color: var(--accent-strong); background: #fff8fa; }

@@ -6,7 +6,7 @@ export function createShell() {
       <header class="app-header">
         <button class="brand" data-switch-view="overview" type="button" aria-label="返回薪资概览">
           <span class="brand__mark" aria-hidden="true">${iconLeaf()}</span>
-          <span>我的薪期</span>
+          <span>薪期提醒</span>
         </button>
         <button class="icon-button" data-switch-view="compose" type="button" aria-label="新增事项">
           ${iconPlusCircle()}
@@ -20,8 +20,8 @@ export function createShell() {
               <span id="overviewMonth">--</span>
               <span class="section-kicker__line"></span>
             </div>
-            <h1>薪资概览</h1>
-            <p id="todayLabel">把发薪、待办与天气放在一个安静清楚的地方。</p>
+            <h1>提醒中心</h1>
+            <p id="todayLabel">把发薪和重要事项，放进同一条清晰的时间线。</p>
           </header>
 
           <div class="dashboard-grid">
@@ -100,12 +100,12 @@ export function createShell() {
 
             <article class="insight-card">
               <div>
-                <h2>每月提醒</h2>
-                <p>提前设置好后，应用会按照你的发薪日安排通知。</p>
+                <h2>自动提醒</h2>
+                <p>工资和你创建的事项都会按各自的时间准时推送。</p>
               </div>
               <div class="insight-card__status">
                 <strong id="pushSummaryValue">未开启</strong>
-                <span id="pushSummaryMeta">中国区固定 09:00</span>
+                <span id="pushSummaryMeta">设置工资与事项的推送时刻</span>
               </div>
               <button class="button button--light" data-switch-view="settings" type="button">
                 检查设置 ${iconArrow()}
@@ -129,9 +129,9 @@ export function createShell() {
 
         <section class="view view--compose" data-view="compose" hidden>
           <header class="page-intro">
-            <div class="section-kicker"><span>新事项</span><span class="section-kicker__line"></span></div>
-            <h1>记一件事</h1>
-            <p>日期、分类和备注都可以慢慢补充。</p>
+            <div class="section-kicker"><span>新提醒</span><span class="section-kicker__line"></span></div>
+            <h1>安排一件事</h1>
+            <p>不只是记下来，也为它安排一个会出现的时刻。</p>
           </header>
           <article class="journal-card graph-paper form-card">
             <form id="reminderForm" class="stack-form">
@@ -141,7 +141,7 @@ export function createShell() {
               </label>
               <div class="split-grid">
                 <label class="field">
-                  <span class="field__label">日期</span>
+                  <span class="field__label">事项日期</span>
                   <input id="reminderDateInput" name="date" class="input" type="date" required />
                 </label>
                 <label class="field">
@@ -153,15 +153,31 @@ export function createShell() {
                   </select>
                 </label>
               </div>
-              <label class="field field--short">
-                <span class="field__label">提前提醒（天）</span>
-                <input id="reminderLeadDaysInput" name="leadDays" class="input" type="number" min="0" max="30" value="3" />
-              </label>
+              <fieldset class="reminder-timing">
+                <legend>提醒安排</legend>
+                <label class="reminder-switch">
+                  <input id="reminderNotificationInput" type="checkbox" checked />
+                  <span class="reminder-switch__control" aria-hidden="true"></span>
+                  <span><strong>推送提醒</strong><small>需要先在设置中允许通知</small></span>
+                </label>
+                <div class="split-grid">
+                  <label class="field">
+                    <span class="field__label">提前几天</span>
+                    <input id="reminderLeadDaysInput" name="leadDays" class="input" type="number" min="0" max="30" value="0" />
+                  </label>
+                  <label class="field">
+                    <span class="field__label">推送时刻</span>
+                    <select id="reminderHourSelect" name="reminderHour" class="select">${hourOptions()}</select>
+                  </label>
+                </div>
+                <p class="timing-hint">会在所选日期（或提前天数）当天的整点推送。</p>
+              </fieldset>
               <label class="field">
                 <span class="field__label">备注</span>
                 <textarea id="reminderNotesInput" name="notes" class="textarea" placeholder="金额、联系人、续费规则..."></textarea>
               </label>
               <button class="button button--primary button--block" type="submit">保存事项</button>
+              <p id="reminderSaveState" class="form-note" aria-live="polite"></p>
             </form>
           </article>
         </section>
@@ -175,7 +191,7 @@ export function createShell() {
           <article class="journal-card graph-paper weather-page-card">
             <div class="weather-page-card__orb">${iconWeather()}</div>
             <div class="weather-page-card__slot" data-weather-slot></div>
-            <p>天气信息仅用于当天速览，不会上传你的精确位置。</p>
+            <p>位置仅用于查询天气和城市名，不会保存在应用内。</p>
           </article>
         </section>
 
@@ -200,16 +216,16 @@ export function createShell() {
             </article>
 
             <article class="journal-card graph-paper form-card">
-              <div class="card-heading"><div><h2>通知设置</h2><p id="pushSupportNote">把站点加到 iPhone 主屏幕后可开启每月推送。</p></div><span id="pushStatusBadge" class="soft-chip">未开启</span></div>
+              <div class="card-heading"><div><h2>通知设置</h2><p id="pushSupportNote">开启一次后，工资和自定义事项都会使用此通知权限。</p></div><span id="pushStatusBadge" class="soft-chip">未开启</span></div>
               <div class="settings-list">
                 <label class="settings-list__row"><span class="settings-list__label">提前天数</span><input id="pushLeadDaysInput" name="pushLeadDays" class="input settings-list__input" type="number" min="0" max="7" value="0" /></label>
-                <div class="settings-list__row"><span class="settings-list__label">发送时间</span><span>09:00</span></div>
+                <label class="settings-list__row"><span class="settings-list__label">工资推送时刻</span><select id="pushHourSelect" name="pushHour" class="select settings-list__input">${hourOptions()}</select></label>
                 <div class="settings-list__row"><span class="settings-list__label">权限</span><span id="pushPermissionLabel">未请求</span></div>
               </div>
               <div class="notification-panel__actions">
-                <button id="pushEnableButton" class="button button--primary" type="button">开启发薪提醒</button>
+                <button id="pushEnableButton" class="button button--primary" type="button">开启通知并同步</button>
                 <button id="pushTestButton" class="button button--secondary" type="button">测试通知</button>
-                <button id="pushDisableButton" class="button button--secondary" type="button">关闭提醒</button>
+                <button id="pushDisableButton" class="button button--secondary" type="button">关闭所有提醒</button>
               </div>
               <p id="pushSyncState" class="form-note">--</p>
             </article>
@@ -245,11 +261,11 @@ export function createShell() {
             <article class="data-note">
               <span class="data-note__icon">${iconDatabase()}</span>
               <div>
-                <h2>更新应用不需要删除主屏幕图标</h2>
-                <p>联网打开应用时会检查新版本，新代码接管后自动刷新一次。本机数据不会因为代码更新而清空。</p>
+                <h2>安全刷新不会影响通知</h2>
+                <p>联网打开应用时会检查新版本，新代码接管后自动刷新一次。本机数据和通知订阅都不会因更新而清空。</p>
                 <div class="maintenance-actions">
-                  <button id="clearAppCacheButton" class="button button--secondary" type="button">清理缓存并重载</button>
-                  <span id="appMaintenanceState" class="form-note">遇到图标或页面异常时使用。</span>
+                  <button id="clearAppCacheButton" class="button button--secondary" type="button">刷新应用资源</button>
+                  <span id="appMaintenanceState" class="form-note">遇到页面异常时使用；不会关闭提醒。</span>
                 </div>
               </div>
             </article>
@@ -259,12 +275,20 @@ export function createShell() {
 
       <nav class="bottom-tabs" aria-label="主导航">
         <button class="bottom-tabs__item is-active" data-switch-view="overview" data-tab-button type="button" aria-selected="true">${iconDashboard()}<span>概览</span></button>
-        <button class="bottom-tabs__item" data-switch-view="compose" data-tab-button type="button" aria-selected="false">${iconPlus()}<span>记事</span></button>
+        <button class="bottom-tabs__item" data-switch-view="compose" data-tab-button type="button" aria-selected="false">${iconPlus()}<span>新提醒</span></button>
         <button class="bottom-tabs__item" data-switch-view="weather" data-tab-button type="button" aria-selected="false">${iconWeather()}<span>天气</span></button>
         <button class="bottom-tabs__item" data-switch-view="settings" data-tab-button type="button" aria-selected="false">${iconSettings()}<span>设置</span></button>
       </nav>
     </div>
   `;
+}
+
+function hourOptions() {
+  return Array.from({ length: 24 }, (_, hour) => {
+    const value = String(hour).padStart(2, "0");
+    const selected = hour === 9 ? " selected" : "";
+    return `<option value="${hour}"${selected}>${value}:00</option>`;
+  }).join("");
 }
 
 function iconLeaf() {

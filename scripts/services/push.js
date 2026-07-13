@@ -3,6 +3,7 @@ import { APP_META, INSTALLATION_KEY } from "../config.js";
 const PUSH_PUBLIC_KEY_ENDPOINT = "/api/push/public-key";
 const PUSH_REGISTER_ENDPOINT = "/api/push/register";
 const PUSH_UNREGISTER_ENDPOINT = "/api/push/unregister";
+const PUSH_REMINDERS_ENDPOINT = "/api/push/reminders";
 
 export function supportsPushNotifications() {
   return (
@@ -37,7 +38,7 @@ export async function getCurrentPushSubscription() {
   return registration.pushManager.getSubscription();
 }
 
-export async function enableSalaryPushNotifications({ day, leadDays }) {
+export async function enableSalaryPushNotifications({ day, leadDays, hour }) {
   if (!supportsPushNotifications()) {
     throw new Error("当前环境不支持推送通知");
   }
@@ -63,6 +64,7 @@ export async function enableSalaryPushNotifications({ day, leadDays }) {
     subscription: subscription.toJSON(),
     salaryDay: day,
     leadDays,
+    reminderHour: hour,
     permission,
     appName: APP_META.productName
   });
@@ -73,7 +75,7 @@ export async function enableSalaryPushNotifications({ day, leadDays }) {
   };
 }
 
-export async function syncSalaryPushRule({ day, leadDays }) {
+export async function syncSalaryPushRule({ day, leadDays, hour }) {
   const subscription = await getCurrentPushSubscription();
   if (!subscription) {
     return null;
@@ -84,6 +86,7 @@ export async function syncSalaryPushRule({ day, leadDays }) {
     subscription: subscription.toJSON(),
     salaryDay: day,
     leadDays,
+    reminderHour: hour,
     permission: Notification.permission,
     appName: APP_META.productName
   });
@@ -91,6 +94,21 @@ export async function syncSalaryPushRule({ day, leadDays }) {
   return {
     endpoint: subscription.endpoint
   };
+}
+
+export async function syncReminderPushRules({ reminders }) {
+  await postJson(PUSH_REMINDERS_ENDPOINT, {
+    installationId: getInstallationId(),
+    reminders: reminders.map((reminder) => ({
+      id: reminder.id,
+      title: reminder.title,
+      date: reminder.date,
+      category: reminder.category,
+      leadDays: reminder.leadDays,
+      hour: reminder.hour,
+      notificationEnabled: reminder.notificationEnabled
+    }))
+  });
 }
 
 export async function disableSalaryPushNotifications() {
@@ -117,8 +135,8 @@ export async function sendLocalTestNotification() {
   }
 
   const registration = await navigator.serviceWorker.ready;
-  await registration.showNotification("发薪提醒测试", {
-    body: "这是一条本机测试通知。如果你看到了它，说明当前设备的通知权限和 PWA 通知能力已经正常。",
+  await registration.showNotification("提醒测试", {
+    body: "这是一条本机测试通知。如果你看到了它，说明工资和事项提醒均可在当前设备正常发送。",
     icon: "./assets/icons/app-icon-v3-192.png",
     badge: "./assets/icons/app-icon-v3-192.png",
     tag: "salary-test",

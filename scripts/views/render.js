@@ -30,6 +30,7 @@ export function createRefs(root) {
     pushStatusBadge: root.querySelector("#pushStatusBadge"),
     pushSupportNote: root.querySelector("#pushSupportNote"),
     pushLeadDaysInput: root.querySelector("#pushLeadDaysInput"),
+    pushHourSelect: root.querySelector("#pushHourSelect"),
     pushPermissionLabel: root.querySelector("#pushPermissionLabel"),
     pushEnableButton: root.querySelector("#pushEnableButton"),
     pushTestButton: root.querySelector("#pushTestButton"),
@@ -40,7 +41,10 @@ export function createRefs(root) {
     reminderDateInput: root.querySelector("#reminderDateInput"),
     reminderCategoryInput: root.querySelector("#reminderCategoryInput"),
     reminderLeadDaysInput: root.querySelector("#reminderLeadDaysInput"),
+    reminderHourSelect: root.querySelector("#reminderHourSelect"),
+    reminderNotificationInput: root.querySelector("#reminderNotificationInput"),
     reminderNotesInput: root.querySelector("#reminderNotesInput"),
+    reminderSaveState: root.querySelector("#reminderSaveState"),
     reminderCount: root.querySelector("#reminderCount"),
     reminderList: root.querySelector("#reminderList"),
     boardPanel: root.querySelector("#board"),
@@ -143,8 +147,9 @@ export function renderPushPanel(state, refs, capabilities) {
         : "权限未请求";
 
   refs.pushLeadDaysInput.value = String(notification.leadDays);
+  refs.pushHourSelect.value = String(notification.hour);
   refs.pushPermissionLabel.textContent = permissionText;
-  refs.pushEnableButton.textContent = notification.enabled ? "重新同步提醒" : "开启发薪提醒";
+  refs.pushEnableButton.textContent = notification.enabled ? "重新同步提醒" : "开启通知并同步";
   refs.pushEnableButton.disabled = !capabilities.supported;
   refs.pushTestButton.disabled = !capabilities.supported;
   refs.pushDisableButton.disabled = !notification.enabled && !notification.endpoint;
@@ -158,8 +163,8 @@ export function renderPushPanel(state, refs, capabilities) {
           ? "失败"
           : "未开启";
     refs.pushSummaryMeta.textContent = notification.enabled
-      ? `${notification.leadDays} 天前 · 每天 09:00`
-      : "中国区固定 09:00";
+      ? `${notification.leadDays} 天前 · ${formatHour(notification.hour)}`
+      : "设置工资与事项的推送时刻";
   }
 
   if (!capabilities.supported) {
@@ -174,10 +179,10 @@ export function renderPushPanel(state, refs, capabilities) {
     : "iPhone 需先添加到主屏幕后再申请通知。";
 
   if (notification.enabled) {
-    refs.pushStatusBadge.textContent = "每月自动提醒";
+    refs.pushStatusBadge.textContent = "提醒已同步";
     const syncText = notification.lastSyncedAt
       ? `已同步到推送服务，最近一次同步时间：${formatTime(notification.lastSyncedAt)}`
-      : "已开启发薪提醒。";
+      : "工资和自定义事项提醒已开启。";
     refs.pushSyncState.textContent = notification.lastTestedAt
       ? `${syncText} 最近一次本机测试通知：${formatTime(notification.lastTestedAt)}`
       : syncText;
@@ -189,7 +194,7 @@ export function renderPushPanel(state, refs, capabilities) {
     ? notification.lastTestedAt
       ? `${notification.lastError} 最近一次本机测试通知：${formatTime(notification.lastTestedAt)}`
       : notification.lastError
-    : "开启后会同步当前设备的发薪提醒。";
+    : "开启后会同步当前设备的工资和自定义事项提醒。";
 }
 
 export function renderOverviewWeather(state, refs) {
@@ -278,6 +283,9 @@ export function renderReminderBoard(state, refs) {
           : days === 0
             ? `${formatDateLong(entry.date)} · 今天`
             : `${formatDateLong(entry.date)} · ${days} 天后`;
+      const notification = entry.notificationEnabled
+        ? `推送 ${entry.leadDays ? `提前 ${entry.leadDays} 天 · ` : ""}${formatHour(entry.hour)}`
+        : "仅记录，不推送";
 
       return `
         <article class="reminder-item reminder-item--${tone}">
@@ -288,6 +296,7 @@ export function renderReminderBoard(state, refs) {
               <h3 class="reminder-item__title">${escapeHtml(entry.title)}</h3>
             </div>
             <p class="reminder-item__meta">${escapeHtml(schedule)}</p>
+            <p class="reminder-item__notification">${escapeHtml(notification)}</p>
             ${entry.notes ? `<p class="reminder-item__notes">${escapeHtml(notes)}</p>` : ""}
           </div>
 
@@ -302,6 +311,10 @@ export function renderReminderBoard(state, refs) {
       `;
     })
     .join("");
+}
+
+function formatHour(hour) {
+  return `${String(Number(hour) || 0).padStart(2, "0")}:00`;
 }
 
 function getSortedReminders(reminders) {

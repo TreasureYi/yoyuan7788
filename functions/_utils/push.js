@@ -5,6 +5,7 @@ export function normalizePushPayload(payload) {
   const auth = String(payload?.subscription?.keys?.auth || "").trim();
   const salaryDay = clampInteger(payload?.salaryDay, 1, 28, 15);
   const leadDays = clampInteger(payload?.leadDays, 0, 7, 0);
+  const reminderHour = clampInteger(payload?.reminderHour, 0, 23, 9);
   const permission = String(payload?.permission || "default").trim() || "default";
   const appName = String(payload?.appName || "薪期台账").trim() || "薪期台账";
 
@@ -15,8 +16,29 @@ export function normalizePushPayload(payload) {
     auth,
     salaryDay,
     leadDays,
+    reminderHour,
     permission,
     appName
+  };
+}
+
+export function normalizeReminderPushRules(payload) {
+  const installationId = String(payload?.installationId || "").trim();
+  const reminders = Array.isArray(payload?.reminders) ? payload.reminders : [];
+
+  return {
+    installationId,
+    reminders: reminders
+      .map((entry) => ({
+        reminderId: String(entry?.id || "").trim(),
+        title: String(entry?.title || "").trim().slice(0, 120),
+        category: String(entry?.category || "其他").trim().slice(0, 40),
+        reminderDate: normalizeDate(entry?.date),
+        leadDays: clampInteger(entry?.leadDays, 0, 30, 0),
+        reminderHour: clampInteger(entry?.hour, 0, 23, 9),
+        enabled: Boolean(entry?.notificationEnabled)
+      }))
+      .filter((entry) => entry.reminderId && entry.title && entry.reminderDate && entry.enabled)
   };
 }
 
@@ -27,4 +49,9 @@ export function clampInteger(value, min, max, fallback) {
   }
 
   return Math.min(Math.max(Math.trunc(parsed), min), max);
+}
+
+function normalizeDate(value) {
+  const date = String(value || "").trim();
+  return /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : "";
 }

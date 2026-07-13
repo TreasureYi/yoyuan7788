@@ -19,6 +19,7 @@ import {
   isStandaloneExperience,
   sendLocalTestNotification,
   supportsPushNotifications,
+  syncReminderPushRules,
   syncSalaryPushRule
 } from "./services/push.js";
 import {
@@ -130,6 +131,7 @@ function bindEvents(refs) {
       replaceSyncedData(result.snapshot);
       cloudSyncPaused = false;
       renderAll(refs);
+      await syncExistingPushSubscription(refs);
       setCloudStatus(refs, "云端数据已恢复到这台设备。");
     } catch (error) {
       cloudSyncPaused = false;
@@ -164,24 +166,38 @@ function bindEvents(refs) {
   });
 
   refs.clearAppCacheButton?.addEventListener("click", async () => {
-    await clearAppCacheAndReload(refs);
+    await refreshAppAssetsAndReload(refs);
   });
 
-  refs.reminderForm.addEventListener("submit", (event) => {
+  refs.reminderForm.addEventListener("submit", async (event) => {
     event.preventDefault();
+    const wantsNotification = refs.reminderNotificationInput.checked;
 
     addReminder({
       title: refs.reminderTitleInput.value.trim(),
       date: refs.reminderDateInput.value,
       category: refs.reminderCategoryInput.value,
-      leadDays: Number(refs.reminderLeadDaysInput.value) || 3,
+      leadDays: Number(refs.reminderLeadDaysInput.value) || 0,
+      hour: Number(refs.reminderHourSelect.value) || 0,
+      notificationEnabled: wantsNotification,
       notes: refs.reminderNotesInput.value.trim()
     });
 
     refs.reminderForm.reset();
     refs.reminderCategoryInput.value = "账单";
-    refs.reminderLeadDaysInput.value = "3";
+    refs.reminderLeadDaysInput.value = "0";
+    refs.reminderHourSelect.value = "9";
+    refs.reminderNotificationInput.checked = true;
+    refs.reminderSaveState.textContent = "事项已保存。";
     renderAll(refs);
+
+    if (wantsNotification && !getState().salary.notification.enabled) {
+      refs.pushSyncState.textContent = "事项已保存。点击“开启通知并同步”后，会按你设定的时间推送。";
+      setActiveView(refs, "settings");
+      return;
+    }
+
+    await syncExistingPushSubscription(refs);
     setActiveView(refs, "overview");
   });
 
@@ -201,7 +217,8 @@ function bindEvents(refs) {
     try {
       const result = await enableSalaryPushNotifications({
         day: state.salary.day,
-        leadDays: nextNotification.leadDays
+        leadDays: nextNotification.leadDays,
+        hour: nextNotification.hour
       });
 
       updateSalary({
@@ -228,6 +245,7 @@ function bindEvents(refs) {
     }
 
     renderAll(refs);
+    await syncExistingPushSubscription(refs);
   });
 
   refs.pushDisableButton.addEventListener("click", async () => {
@@ -286,7 +304,7 @@ function bindEvents(refs) {
     });
   });
 
-  refs.reminderList.addEventListener("click", (event) => {
+  refs.reminderList.addEventListener("click", async (event) => {
     const target = event.target;
     if (!(target instanceof HTMLElement)) {
       return;
@@ -306,6 +324,7 @@ function bindEvents(refs) {
     if (action === "delete") {
       deleteReminder(id);
       renderAll(refs);
+      await syncExistingPushSubscription(refs);
       return;
     }
 
@@ -412,29 +431,33 @@ function registerServiceWorker() {
   });
 }
 
-async function clearAppCacheAndReload(refs) {
+async function refreshAppAssetsAndReload(refs) {
   const button = refs.clearAppCacheButton;
   const stateLabel = refs.appMaintenanceState;
   if (button) {
     button.disabled = true;
   }
   if (stateLabel) {
-    stateLabel.textContent = "正在清理缓存...";
+    stateLabel.textContent = "正在刷新应用资源...";
   }
 
   try {
     if ("caches" in window) {
       const cacheNames = await caches.keys();
-      await Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName)));
+      await Promise.all(
+        cacheNames
+          .filter((cacheName) => cacheName.startsWith("yoyuan-ledger-"))
+          .map((cacheName) => caches.delete(cacheName))
+      );
     }
 
     if ("serviceWorker" in navigator) {
       const registrations = await navigator.serviceWorker.getRegistrations();
-      await Promise.all(registrations.map((registration) => registration.unregister()));
+      await Promise.all(registrations.map((registration) => registration.update().catch(() => {})));
     }
 
     if (stateLabel) {
-      stateLabel.textContent = "缓存已清理，正在重新加载。";
+      stateLabel.textContent = "应用资源已刷新，通知订阅会保留。正在重新加载。";
     }
 
     const url = new URL(window.location.href);
@@ -468,6 +491,7 @@ async function hydrateCloudBackup(refs) {
     replaceSyncedData(result.snapshot);
     cloudSyncPaused = false;
     renderAll(refs);
+    await syncExistingPushSubscription(refs);
     setCloudStatus(refs, "已自动恢复云端数据。");
   } catch (error) {
     cloudSyncPaused = false;
@@ -565,8 +589,11 @@ async function syncExistingPushSubscription(refs) {
   try {
     const result = await syncSalaryPushRule({
       day: getState().salary.day,
-      leadDays: notification.leadDays
+      leadDays: notification.leadDays,
+      hour: notification.hour
     });
+
+    await syncReminderPushRules({ reminders: getState().reminders });
 
     if (result?.endpoint) {
       updateSalary({
@@ -593,7 +620,7 @@ async function syncExistingPushSubscription(refs) {
 function getNotificationFormState(refs) {
   return {
     leadDays: Number(refs.pushLeadDaysInput.value) || 0,
-    hour: 9,
+    hour: Number(refs.pushHourSelect.value) || 0,
     timezone: "Asia/Shanghai",
     permission: typeof Notification === "undefined" ? "default" : Notification.permission
   };
@@ -607,7 +634,13 @@ function getPushCapabilities() {
 }
 
 function shouldAutoRefreshWeather(state) {
-  if (state.weather?.status !== "ready" || state.weather?.payload?.country !== "自动定位") {
+  const city = state.weather?.payload?.city || "";
+  if (
+    state.weather?.status !== "ready" ||
+    state.weather?.payload?.country !== "自动定位" ||
+    city === "当前位置" ||
+    city.startsWith("北纬")
+  ) {
     return true;
   }
 

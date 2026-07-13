@@ -2,11 +2,11 @@ import webpush from "web-push";
 
 const DAY_MS = 86400000;
 const FIXED_TIMEZONE = "Asia/Shanghai";
-const FIXED_REMINDER_HOUR = 9;
 
 export default {
   async scheduled(controller, env, ctx) {
-    const records = await env.DB.prepare(
+    const [salaryRecords, reminderRecords] = await Promise.all([
+      env.DB.prepare(
       `
         SELECT
           installation_id,
@@ -21,24 +21,49 @@ export default {
         FROM salary_push_subscriptions
         WHERE enabled = 1
       `
-    ).all();
+      ).all(),
+      env.DB.prepare(
+        `
+          SELECT
+            rules.installation_id,
+            rules.reminder_id,
+            rules.title,
+            rules.category,
+            rules.reminder_date,
+            rules.lead_days,
+            rules.reminder_hour,
+            rules.last_sent_key,
+            subscriptions.endpoint,
+            subscriptions.p256dh,
+            subscriptions.auth,
+            subscriptions.timezone
+          FROM reminder_push_rules rules
+          INNER JOIN salary_push_subscriptions subscriptions
+            ON subscriptions.installation_id = rules.installation_id
+          WHERE rules.enabled = 1 AND subscriptions.enabled = 1
+        `
+      ).all()
+    ]);
 
-    if (!records?.results?.length) {
+    if (!salaryRecords?.results?.length && !reminderRecords?.results?.length) {
       return;
     }
 
     const subject = env.VAPID_SUBJECT || "mailto:no-reply@example.com";
     webpush.setVapidDetails(subject, env.VAPID_PUBLIC_KEY, env.VAPID_PRIVATE_KEY);
 
-    const jobs = records.results.map((entry) => processEntry(entry, env));
+    const jobs = [
+      ...(salaryRecords.results || []).map((entry) => processSalaryEntry(entry, env)),
+      ...(reminderRecords.results || []).map((entry) => processReminderEntry(entry, env))
+    ];
     ctx.waitUntil(Promise.all(jobs));
   }
 };
 
-async function processEntry(entry, env) {
+async function processSalaryEntry(entry, env) {
   const now = new Date();
-  const local = getLocalParts(now, FIXED_TIMEZONE);
-  if (local.hour < FIXED_REMINDER_HOUR) {
+  const local = getLocalParts(now, entry.timezone || FIXED_TIMEZONE);
+  if (local.hour !== Number(entry.reminder_hour ?? 9)) {
     return;
   }
 
@@ -101,6 +126,65 @@ async function processEntry(entry, env) {
   }
 }
 
+async function processReminderEntry(entry, env) {
+  const now = new Date();
+  const local = getLocalParts(now, entry.timezone || FIXED_TIMEZONE);
+  if (local.hour !== Number(entry.reminder_hour ?? 9)) {
+    return;
+  }
+
+  const noticeDate = getReminderNoticeDate(entry.reminder_date, Number(entry.lead_days || 0));
+  if (!noticeDate || toCycleKey(local) !== noticeDate) {
+    return;
+  }
+
+  const cycleKey = `${entry.reminder_id}:${noticeDate}`;
+  if (cycleKey === entry.last_sent_key) {
+    return;
+  }
+
+  const payload = JSON.stringify({
+    title: entry.title,
+    body: buildCustomReminderBody(entry, Number(entry.lead_days || 0)),
+    tag: `reminder-${entry.reminder_id}-${noticeDate}`,
+    url: env.APP_URL || "/"
+  });
+
+  try {
+    await webpush.sendNotification(
+      {
+        endpoint: entry.endpoint,
+        keys: {
+          p256dh: entry.p256dh,
+          auth: entry.auth
+        }
+      },
+      payload
+    );
+
+    await env.DB.prepare(
+      `
+        UPDATE reminder_push_rules
+        SET last_sent_key = ?, updated_at = ?
+        WHERE installation_id = ? AND reminder_id = ?
+      `
+    )
+      .bind(cycleKey, new Date().toISOString(), entry.installation_id, entry.reminder_id)
+      .run();
+  } catch (error) {
+    if (error?.statusCode === 404 || error?.statusCode === 410) {
+      await env.DB.prepare(
+        `UPDATE salary_push_subscriptions SET enabled = 0, updated_at = ? WHERE installation_id = ?`
+      )
+        .bind(new Date().toISOString(), entry.installation_id)
+        .run();
+      return;
+    }
+
+    throw error;
+  }
+}
+
 function getLocalParts(date, timeZone) {
   const formatter = new Intl.DateTimeFormat("en-CA", {
     timeZone,
@@ -141,6 +225,16 @@ function toCycleKey(parts) {
   return `${parts.year}-${String(parts.month).padStart(2, "0")}-${String(parts.day).padStart(2, "0")}`;
 }
 
+function getReminderNoticeDate(value, leadDays) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(value || ""))) {
+    return "";
+  }
+
+  const [year, month, day] = value.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day - leadDays));
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(date.getUTCDate()).padStart(2, "0")}`;
+}
+
 function getSalaryExecutionParts(year, month, salaryDay) {
   const candidate = new Date(Date.UTC(year, month - 1, salaryDay));
   const adjusted = moveWeekendBackward(candidate);
@@ -178,4 +272,12 @@ function buildReminderBody(daysUntil, targetSalary) {
   }
 
   return `${daysUntil} 天后是发薪日，建议提前检查工资卡、账单和自动扣款安排。`;
+}
+
+function buildCustomReminderBody(entry, leadDays) {
+  if (leadDays === 0) {
+    return `今天需要处理：${entry.title}${entry.category ? `（${entry.category}）` : ""}。`;
+  }
+
+  return `${leadDays} 天后需要处理：${entry.title}${entry.category ? `（${entry.category}）` : ""}。`;
 }

@@ -168,7 +168,9 @@ function normalizeReminder(entry) {
     title: String(entry?.title || "").trim(),
     date: String(entry?.date || ""),
     category: String(entry?.category || "其他"),
-    leadDays: Number(entry?.leadDays) || 3,
+    leadDays: clampReminderLeadDays(entry?.leadDays),
+    hour: clampReminderHour(entry?.hour),
+    notificationEnabled: Boolean(entry?.notificationEnabled),
     notes: String(entry?.notes || "").trim(),
     createdAt: entry?.createdAt || new Date().toISOString()
   };
@@ -190,6 +192,15 @@ function clampLeadDays(day) {
   }
 
   return Math.min(Math.max(Math.trunc(value), 0), 7);
+}
+
+function clampReminderLeadDays(day) {
+  const value = Number(day);
+  if (!Number.isFinite(value)) {
+    return 0;
+  }
+
+  return Math.min(Math.max(Math.trunc(value), 0), 30);
 }
 
 function clampReminderHour(hour) {
