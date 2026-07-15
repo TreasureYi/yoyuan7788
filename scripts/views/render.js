@@ -16,6 +16,9 @@ export function createRefs(root) {
     tabButtons: Array.from(root.querySelectorAll("[data-tab-button]")),
     pushSummaryValue: root.querySelector("#pushSummaryValue"),
     pushSummaryMeta: root.querySelector("#pushSummaryMeta"),
+    pushNudge: root.querySelector("#pushNudge"),
+    pushNudgeTitle: root.querySelector("#pushNudgeTitle"),
+    pushNudgeText: root.querySelector("#pushNudgeText"),
     todayLabel: root.querySelector("#todayLabel"),
     salaryStatus: root.querySelector("#salaryStatus"),
     salaryCountdown: root.querySelector("#salaryCountdown"),
@@ -167,6 +170,8 @@ export function renderPushPanel(state, refs, capabilities) {
       : "设置工资与事项的推送时刻";
   }
 
+  renderPushNudge(refs, capabilities, notification, state);
+
   if (!capabilities.supported) {
     refs.pushStatusBadge.textContent = "当前不支持";
     refs.pushSupportNote.textContent = "当前环境不支持推送。";
@@ -195,6 +200,33 @@ export function renderPushPanel(state, refs, capabilities) {
       ? `${notification.lastError} 最近一次本机测试通知：${formatTime(notification.lastTestedAt)}`
       : notification.lastError
     : "开启后会同步当前设备的工资和自定义事项提醒。";
+}
+
+function renderPushNudge(refs, capabilities, notification, state) {
+  if (!refs.pushNudge || !refs.pushNudgeTitle || !refs.pushNudgeText) {
+    return;
+  }
+
+  const hasNotifiedReminders = state.reminders.some((entry) => entry.notificationEnabled);
+  const shouldShow = !notification.enabled || !capabilities.supported;
+  refs.pushNudge.hidden = !shouldShow;
+
+  if (!capabilities.supported) {
+    refs.pushNudgeTitle.textContent = "当前环境不支持通知";
+    refs.pushNudgeText.textContent = "请从 iPhone 主屏幕打开此应用后再开启提醒。";
+    return;
+  }
+
+  if (notification.permission === "denied") {
+    refs.pushNudgeTitle.textContent = "通知权限已关闭";
+    refs.pushNudgeText.textContent = "请在 iPhone 设置中允许“薪期提醒”发送通知。";
+    return;
+  }
+
+  refs.pushNudgeTitle.textContent = hasNotifiedReminders ? "有事项等待开启通知" : "通知尚未准备好";
+  refs.pushNudgeText.textContent = hasNotifiedReminders
+    ? "开启一次即可同步这些事项，并按设定时间提醒。"
+    : "需要提醒时，在新事项中打开“推送提醒”即可。";
 }
 
 export function renderOverviewWeather(state, refs) {

@@ -108,7 +108,20 @@ async function processSalaryEntry(entry, env) {
     )
       .bind(cycleKey, new Date().toISOString(), new Date().toISOString(), entry.installation_id)
       .run();
+    await recordDeliveryAttempt(env, {
+      installationId: entry.installation_id,
+      eventType: "salary",
+      cycleKey,
+      status: "sent"
+    });
   } catch (error) {
+    await recordDeliveryAttempt(env, {
+      installationId: entry.installation_id,
+      eventType: "salary",
+      cycleKey,
+      status: "failed",
+      detail: describePushError(error)
+    });
     if (error?.statusCode === 404 || error?.statusCode === 410) {
       await env.DB.prepare(
         `
@@ -171,7 +184,22 @@ async function processReminderEntry(entry, env) {
     )
       .bind(cycleKey, new Date().toISOString(), entry.installation_id, entry.reminder_id)
       .run();
+    await recordDeliveryAttempt(env, {
+      installationId: entry.installation_id,
+      reminderId: entry.reminder_id,
+      eventType: "reminder",
+      cycleKey,
+      status: "sent"
+    });
   } catch (error) {
+    await recordDeliveryAttempt(env, {
+      installationId: entry.installation_id,
+      reminderId: entry.reminder_id,
+      eventType: "reminder",
+      cycleKey,
+      status: "failed",
+      detail: describePushError(error)
+    });
     if (error?.statusCode === 404 || error?.statusCode === 410) {
       await env.DB.prepare(
         `UPDATE salary_push_subscriptions SET enabled = 0, updated_at = ? WHERE installation_id = ?`
@@ -183,6 +211,29 @@ async function processReminderEntry(entry, env) {
 
     throw error;
   }
+}
+
+async function recordDeliveryAttempt(env, { installationId, reminderId = "", eventType, cycleKey, status, detail = "" }) {
+  try {
+    await env.DB.prepare(
+      `
+        INSERT INTO push_delivery_attempts (
+          installation_id, reminder_id, event_type, cycle_key, status, detail, attempted_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)
+      `
+    )
+      .bind(installationId, reminderId, eventType, cycleKey, status, detail.slice(0, 500), new Date().toISOString())
+      .run();
+  } catch (error) {
+    // A diagnostics write must never block the notification attempt.
+    console.error("Failed to record push delivery attempt", error);
+  }
+}
+
+function describePushError(error) {
+  const status = error?.statusCode ? `HTTP ${error.statusCode}` : "";
+  const message = String(error?.message || "Unknown push error");
+  return [status, message].filter(Boolean).join(": ");
 }
 
 function getLocalParts(date, timeZone) {

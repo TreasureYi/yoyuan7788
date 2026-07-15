@@ -1,0 +1,374 @@
+/* A compact, iOS-first layer for a personal reminder app. */
+:root {
+  --surface: #ffffff;
+  --surface-strong: #ffffff;
+  --surface-muted: #f7f5f6;
+  --bg: #f7f5f6;
+  --text: #251d21;
+  --text-muted: #76686f;
+  --text-soft: #92858b;
+  --accent: #963f67;
+  --accent-strong: #752c4f;
+  --accent-soft: #f9e6ee;
+  --line: rgba(37, 29, 33, 0.1);
+  --line-strong: rgba(37, 29, 33, 0.16);
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
+  --page-width: 680px;
+  --page-pad: clamp(16px, 5vw, 24px);
+  --gap-section: 18px;
+  --tabbar-height: 70px;
+  --shadow-sm: 0 1px 2px rgba(37, 29, 33, 0.05), 0 8px 24px rgba(37, 29, 33, 0.05);
+  --shadow-md: 0 1px 2px rgba(37, 29, 33, 0.06), 0 14px 36px rgba(37, 29, 33, 0.07);
+}
+
+html,
+body {
+  background: var(--bg);
+}
+
+body {
+  background: var(--bg);
+}
+
+.app-shell {
+  padding-top: max(8px, env(safe-area-inset-top));
+  padding-bottom: calc(var(--tabbar-height) + 22px + env(safe-area-inset-bottom));
+}
+
+.app-header {
+  min-height: 56px;
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+}
+
+.brand {
+  gap: 8px;
+  font-size: 1.05rem;
+}
+
+.brand__mark {
+  width: 22px;
+  height: 22px;
+}
+
+.icon-button {
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.overview-intro {
+  padding: 22px 0 0;
+}
+
+.overview-intro__eyebrow {
+  margin: 0;
+  color: var(--text-soft);
+  font-size: 0.8rem;
+  font-weight: 650;
+}
+
+.overview-intro h1 {
+  margin: 6px 0 4px;
+  color: var(--text);
+  font-size: clamp(1.8rem, 8vw, 2.45rem);
+  letter-spacing: -0.05em;
+}
+
+.overview-intro p:not(.overview-intro__eyebrow) {
+  font-size: 0.9rem;
+}
+
+.overview-stack {
+  display: grid;
+  gap: 14px;
+  padding-top: 20px;
+}
+
+.salary-snapshot {
+  display: grid;
+  gap: 18px;
+  padding: 20px;
+  border: 1px solid rgba(117, 44, 79, 0.18);
+  border-radius: var(--radius-2xl);
+  background: linear-gradient(135deg, #fff6f9, #fff 74%);
+  box-shadow: var(--shadow-sm);
+}
+
+.salary-snapshot__header,
+.section-head,
+.notification-nudge {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.salary-snapshot__eyebrow {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
+.salary-snapshot #salaryStatus {
+  margin: 3px 0 0;
+  color: var(--text);
+  font-weight: 700;
+}
+
+.salary-snapshot__date {
+  max-width: 10rem;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  line-height: 1.45;
+  text-align: right;
+}
+
+.salary-snapshot__countdown {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+}
+
+.salary-snapshot__countdown strong {
+  color: var(--accent-strong);
+  font-family: var(--font-display);
+  font-size: clamp(4.5rem, 20vw, 5.75rem);
+  font-weight: 720;
+  line-height: 0.72;
+  letter-spacing: -0.09em;
+}
+
+.salary-snapshot__countdown span {
+  color: var(--accent-strong);
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.salary-snapshot__details {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.salary-snapshot__details div {
+  min-width: 0;
+}
+
+.salary-snapshot__details span,
+.salary-snapshot__details strong {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.salary-snapshot__details span {
+  color: var(--text-soft);
+  font-size: 0.7rem;
+}
+
+.salary-snapshot__details strong {
+  margin-top: 3px;
+  color: var(--text);
+  font-size: 0.86rem;
+}
+
+.notification-nudge {
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.notification-nudge[hidden] {
+  display: none;
+}
+
+.notification-nudge__icon {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border-radius: 12px;
+  color: var(--accent-strong);
+  background: var(--accent-soft);
+  flex: 0 0 auto;
+}
+
+.notification-nudge__icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.notification-nudge > div {
+  min-width: 0;
+  margin-right: auto;
+}
+
+.notification-nudge strong,
+.notification-nudge p {
+  display: block;
+  margin: 0;
+}
+
+.notification-nudge strong {
+  color: var(--text);
+  font-size: 0.85rem;
+}
+
+.notification-nudge p {
+  margin-top: 2px;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+
+.button--compact {
+  min-height: 36px;
+  padding: 7px 13px;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.journal-card,
+.graph-paper {
+  background-image: none;
+}
+
+.reminders-card {
+  padding: 18px;
+  border-color: var(--line);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.section-head {
+  margin-bottom: 12px;
+}
+
+.section-title {
+  color: var(--text);
+  font-size: 1.15rem;
+}
+
+.section-head__meta {
+  margin: 3px 0 0;
+  color: var(--text-muted);
+  font-size: 0.74rem;
+}
+
+.section-head__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.soft-chip {
+  min-height: 26px;
+  padding: 4px 9px;
+  color: var(--text-muted);
+  background: var(--surface-muted);
+}
+
+.reminder-item {
+  border-radius: 14px;
+  background: var(--surface);
+}
+
+.reminder-item__notification {
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.empty-state--quiet {
+  min-height: 132px;
+  padding: 28px 12px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 14px;
+  background: var(--surface-muted);
+}
+
+.empty-state--quiet .empty-state__title::after {
+  display: block;
+  margin-top: 6px;
+  color: var(--text-soft);
+  font-size: 0.78rem;
+  font-weight: 400;
+  content: "轻点右上角或“新建”添加一条。";
+}
+
+.page-intro {
+  padding-top: 22px;
+}
+
+.page-intro h1 {
+  color: var(--text);
+  font-size: clamp(1.7rem, 7vw, 2.2rem);
+}
+
+.form-card,
+.view--compose .form-card {
+  margin-top: 18px;
+  border-color: var(--line);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.reminder-timing,
+.settings-list__row {
+  background: var(--surface-muted);
+}
+
+.input,
+.select,
+.textarea {
+  min-height: 46px;
+  border-color: var(--line);
+  background: var(--surface);
+  box-shadow: none;
+}
+
+.bottom-tabs {
+  width: min(100%, 680px);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  min-height: var(--tabbar-height);
+  border: 1px solid var(--line);
+  border-bottom: 0;
+  border-radius: 22px 22px 0 0;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  box-shadow: 0 -8px 28px rgba(37, 29, 33, 0.05);
+}
+
+.bottom-tabs__item {
+  min-width: 0;
+  padding: 7px 10px;
+  border-radius: 14px;
+}
+
+.bottom-tabs__item.is-active {
+  background: var(--accent-soft);
+}
+
+@media (max-width: 430px) {
+  .salary-snapshot {
+    padding: 18px;
+  }
+
+  .notification-nudge {
+    align-items: flex-start;
+  }
+
+  .notification-nudge .button {
+    margin-top: 1px;
+  }
+
+  .section-head__actions .soft-chip {
+    display: none;
+  }
+}

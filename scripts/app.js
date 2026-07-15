@@ -192,8 +192,11 @@ function bindEvents(refs) {
     renderAll(refs);
 
     if (wantsNotification && !getState().salary.notification.enabled) {
-      refs.pushSyncState.textContent = "事项已保存。点击“开启通知并同步”后，会按你设定的时间推送。";
-      setActiveView(refs, "settings");
+      const enabled = await enablePushAndSync(refs);
+      refs.reminderSaveState.textContent = enabled
+        ? "事项已保存，通知已同步。"
+        : "事项已保存，但通知尚未同步。请在设置中检查状态。";
+      setActiveView(refs, enabled ? "overview" : "settings");
       return;
     }
 
@@ -202,50 +205,7 @@ function bindEvents(refs) {
   });
 
   refs.pushEnableButton.addEventListener("click", async () => {
-    const state = getState();
-    const nextNotification = getNotificationFormState(refs);
-
-    updateSalary({
-      notification: {
-        ...state.salary.notification,
-        ...nextNotification,
-        lastError: ""
-      }
-    });
-    renderAll(refs);
-
-    try {
-      const result = await enableSalaryPushNotifications({
-        day: state.salary.day,
-        leadDays: nextNotification.leadDays,
-        hour: nextNotification.hour
-      });
-
-      updateSalary({
-        notification: {
-          ...getState().salary.notification,
-          ...nextNotification,
-          enabled: true,
-          permission: "granted",
-          endpoint: result.endpoint,
-          lastSyncedAt: new Date().toISOString(),
-          lastError: ""
-        }
-      });
-    } catch (error) {
-      updateSalary({
-        notification: {
-          ...getState().salary.notification,
-          ...nextNotification,
-          enabled: false,
-          permission: typeof Notification === "undefined" ? "default" : Notification.permission,
-          lastError: error.message
-        }
-      });
-    }
-
-    renderAll(refs);
-    await syncExistingPushSubscription(refs);
+    await enablePushAndSync(refs);
   });
 
   refs.pushDisableButton.addEventListener("click", async () => {
@@ -613,6 +573,55 @@ async function syncExistingPushSubscription(refs) {
         lastError: error.message
       }
     });
+    renderAll(refs);
+  }
+}
+
+async function enablePushAndSync(refs) {
+  const state = getState();
+  const nextNotification = getNotificationFormState(refs);
+
+  updateSalary({
+    notification: {
+      ...state.salary.notification,
+      ...nextNotification,
+      lastError: ""
+    }
+  });
+  renderAll(refs);
+
+  try {
+    const result = await enableSalaryPushNotifications({
+      day: state.salary.day,
+      leadDays: nextNotification.leadDays,
+      hour: nextNotification.hour
+    });
+
+    updateSalary({
+      notification: {
+        ...getState().salary.notification,
+        ...nextNotification,
+        enabled: true,
+        permission: "granted",
+        endpoint: result.endpoint,
+        lastSyncedAt: new Date().toISOString(),
+        lastError: ""
+      }
+    });
+    await syncExistingPushSubscription(refs);
+    return true;
+  } catch (error) {
+    updateSalary({
+      notification: {
+        ...getState().salary.notification,
+        ...nextNotification,
+        enabled: false,
+        permission: typeof Notification === "undefined" ? "default" : Notification.permission,
+        lastError: error.message
+      }
+    });
+    return false;
+  } finally {
     renderAll(refs);
   }
 }

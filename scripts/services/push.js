@@ -43,13 +43,13 @@ export async function enableSalaryPushNotifications({ day, leadDays, hour }) {
     throw new Error("当前环境不支持推送通知");
   }
 
-  const publicKey = await fetchPublicKey();
   const permission = await Notification.requestPermission();
 
   if (permission !== "granted") {
     throw new Error(permission === "denied" ? "通知权限已被拒绝" : "需要先允许通知权限");
   }
 
+  const publicKey = await fetchPublicKey();
   const registration = await navigator.serviceWorker.ready;
   const existing = await registration.pushManager.getSubscription();
   const subscription =

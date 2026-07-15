@@ -1,7 +1,7 @@
 export const STORAGE_KEY = "yoyuan-ledger:v2";
 export const INSTALLATION_KEY = "yoyuan-ledger:installation-id";
 export const RECOVERY_CODE_KEY = "yoyuan-ledger:recovery-code";
-export const APP_VERSION = "20260713.2";
+export const APP_VERSION = "20260715.1";
 
 export const APP_META = {
   productName: "薪期提醒",

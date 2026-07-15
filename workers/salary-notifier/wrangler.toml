@@ -4,7 +4,10 @@ compatibility_date = "2026-06-16"
 compatibility_flags = ["nodejs_compat"]
 
 [triggers]
-crons = ["0 * * * *"]
+# Cloudflare Cron can be delayed or occasionally miss a single invocation.
+# Checking every five minutes lets the worker retry during the selected hour;
+# last_sent_key still guarantees one notification per reminder/cycle.
+crons = ["*/5 * * * *"]
 
 [[d1_databases]]
 binding = "DB"
@@ -14,6 +17,9 @@ database_id = "236a04da-7a76-4fc7-a8b8-e077ac39aa2c"
 [vars]
 APP_URL = "https://yoyuan7788.pages.dev"
 VAPID_SUBJECT = "2529557684@qq.com"
+
+[observability.logs]
+enabled = true
 
 # 这两个建议在 Cloudflare Dashboard / Wrangler secrets 里配置
 # wrangler secret put VAPID_PUBLIC_KEY

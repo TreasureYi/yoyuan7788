@@ -38,6 +38,20 @@ CREATE TABLE IF NOT EXISTS reminder_push_rules (
 CREATE INDEX IF NOT EXISTS idx_reminder_push_due
   ON reminder_push_rules (enabled, reminder_date, reminder_hour);
 
+CREATE TABLE IF NOT EXISTS push_delivery_attempts (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  installation_id TEXT NOT NULL,
+  reminder_id TEXT NOT NULL DEFAULT '',
+  event_type TEXT NOT NULL,
+  cycle_key TEXT NOT NULL,
+  status TEXT NOT NULL,
+  detail TEXT NOT NULL DEFAULT '',
+  attempted_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_push_delivery_attempts_recent
+  ON push_delivery_attempts (installation_id, attempted_at DESC);
+
 CREATE TABLE IF NOT EXISTS encrypted_user_backups (
   sync_id TEXT PRIMARY KEY,
   encrypted_data TEXT NOT NULL,

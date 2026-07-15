@@ -16,107 +16,50 @@ export function createShell() {
       <main class="workspace">
         <section class="view view--overview is-active" data-view="overview">
           <header class="overview-intro">
-            <div class="section-kicker">
-              <span id="overviewMonth">--</span>
-              <span class="section-kicker__line"></span>
-            </div>
-            <h1>提醒中心</h1>
-            <p id="todayLabel">把发薪和重要事项，放进同一条清晰的时间线。</p>
+            <p class="overview-intro__eyebrow" id="overviewMonth">--</p>
+            <h1>今天要记得什么？</h1>
+            <p id="todayLabel">把发薪和重要事项放在一起，按需要提醒。</p>
           </header>
 
-          <div class="dashboard-grid">
-            <article class="journal-card graph-paper salary-overview-card">
-              <div class="card-heading">
+          <div class="overview-stack">
+            <article class="salary-snapshot">
+              <div class="salary-snapshot__header">
                 <div>
-                  <h2>距离下次发薪</h2>
+                  <p class="salary-snapshot__eyebrow">下次发薪</p>
                   <p id="salaryStatus">--</p>
                 </div>
-                <span class="soft-chip">净收入</span>
+                <span class="salary-snapshot__date" id="salaryDate">--</span>
               </div>
-
-              <div class="salary-curve" aria-hidden="true">
-                <svg viewBox="0 0 420 130" preserveAspectRatio="none">
-                  <defs>
-                    <linearGradient id="salaryArea" x1="0" x2="0" y1="0" y2="1">
-                      <stop offset="0%" stop-color="#6f2c4f" stop-opacity=".18"/>
-                      <stop offset="100%" stop-color="#6f2c4f" stop-opacity="0"/>
-                    </linearGradient>
-                  </defs>
-                  <path class="salary-curve__area" d="M0 102 C72 72 126 103 186 91 C250 79 285 30 352 40 C385 44 403 63 420 75 L420 130 L0 130 Z"/>
-                  <path class="salary-curve__line" d="M0 102 C72 72 126 103 186 91 C250 79 285 30 352 40 C385 44 403 63 420 75"/>
-                </svg>
+              <div class="salary-snapshot__countdown">
+                <strong id="salaryCountdown">--</strong><span id="salaryCountdownUnit">天</span>
               </div>
-
-              <div class="countdown-lockup">
-                <strong id="salaryCountdown">--</strong>
-                <span id="salaryCountdownUnit">天</span>
-                <small>预计到账 <b id="salaryDate">--</b></small>
+              <div class="salary-snapshot__details">
+                <div><span>收入</span><strong id="salaryAmountDisplay">--</strong></div>
+                <div><span>到账账户</span><strong id="salaryAccountDisplay">--</strong></div>
               </div>
             </article>
 
-            <article class="journal-card graph-paper process-card">
-              <div class="card-heading">
-                <div>
-                  <h2>发薪路径</h2>
-                  <p>按你的设置自动计算</p>
-                </div>
-              </div>
-              <div class="process-path">
-                <div class="process-step is-done">
-                  <span class="process-step__dot"></span>
-                  <div><strong>发薪规则已设置</strong><small id="salaryReminderState">--</small></div>
-                </div>
-                <div class="process-step is-done">
-                  <span class="process-step__dot"></span>
-                  <div><strong>提醒日期</strong><small id="salaryReminderDate">--</small></div>
-                </div>
-                <div class="process-step">
-                  <span class="process-step__dot"></span>
-                  <div><strong>预计到账</strong><small id="salaryDatePath">见概览卡片</small></div>
-                </div>
-              </div>
-            </article>
-
-            <div class="metric-grid">
-              <article class="journal-card graph-paper metric-card">
-                <span class="metric-card__icon metric-card__icon--pink">${iconWallet()}</span>
-                <small>每月收入</small>
-                <strong id="salaryAmountDisplay">--</strong>
-                <p>按当前工资设置显示</p>
-              </article>
-              <article class="journal-card graph-paper metric-card">
-                <span class="metric-card__icon metric-card__icon--mauve">${iconCard()}</span>
-                <small>到账账户</small>
-                <strong id="salaryAccountDisplay">--</strong>
-                <p>工资到账所用账户</p>
-              </article>
-              <article class="journal-card graph-paper metric-card">
-                <span class="metric-card__icon metric-card__icon--lavender">${iconCalendar()}</span>
-                <small>待办事项</small>
-                <strong id="reminderSummaryValue">0</strong>
-                <p id="reminderSummaryMeta">暂时没有待办</p>
-              </article>
-            </div>
-
-            <article class="insight-card">
+            <article class="notification-nudge" id="pushNudge" hidden>
+              <span class="notification-nudge__icon" aria-hidden="true">${iconBell()}</span>
               <div>
-                <h2>自动提醒</h2>
-                <p>工资和你创建的事项都会按各自的时间准时推送。</p>
+                <strong id="pushNudgeTitle">通知尚未准备好</strong>
+                <p id="pushNudgeText">开启后，带有通知的事项才会准时推送。</p>
               </div>
-              <div class="insight-card__status">
-                <strong id="pushSummaryValue">未开启</strong>
-                <span id="pushSummaryMeta">设置工资与事项的推送时刻</span>
-              </div>
-              <button class="button button--light" data-switch-view="settings" type="button">
-                检查设置 ${iconArrow()}
-              </button>
+              <button class="button button--secondary button--compact" data-switch-view="settings" type="button">去开启</button>
             </article>
 
             <article class="journal-card reminders-card" id="board">
               <div class="section-head">
-                <h2 class="section-title">最近事项</h2>
-                <span id="reminderCount" class="soft-chip">0 条</span>
+                <div>
+                  <h2 class="section-title">事项</h2>
+                  <p id="reminderSummaryMeta" class="section-head__meta">暂时没有待办</p>
+                </div>
+                <div class="section-head__actions">
+                  <span id="reminderCount" class="soft-chip">0 条</span>
+                  <button class="button button--primary button--compact" data-switch-view="compose" type="button">新建</button>
+                </div>
               </div>
+              <span id="reminderSummaryValue" class="sr-only">0</span>
               <div class="filters" role="tablist" aria-label="提醒筛选">
                 <button class="filter is-active" data-filter="all" type="button">全部</button>
                 <button class="filter" data-filter="upcoming" type="button">7 天内</button>
@@ -170,7 +113,7 @@ export function createShell() {
                     <select id="reminderHourSelect" name="reminderHour" class="select">${hourOptions()}</select>
                   </label>
                 </div>
-                <p class="timing-hint">会在所选日期（或提前天数）当天的整点推送。</p>
+                <p class="timing-hint">计划在所选时刻发送；若定时任务延迟，会在该小时内自动补发一次。</p>
               </fieldset>
               <label class="field">
                 <span class="field__label">备注</span>
@@ -276,7 +219,6 @@ export function createShell() {
       <nav class="bottom-tabs" aria-label="主导航">
         <button class="bottom-tabs__item is-active" data-switch-view="overview" data-tab-button type="button" aria-selected="true">${iconDashboard()}<span>概览</span></button>
         <button class="bottom-tabs__item" data-switch-view="compose" data-tab-button type="button" aria-selected="false">${iconPlus()}<span>新提醒</span></button>
-        <button class="bottom-tabs__item" data-switch-view="weather" data-tab-button type="button" aria-selected="false">${iconWeather()}<span>天气</span></button>
         <button class="bottom-tabs__item" data-switch-view="settings" data-tab-button type="button" aria-selected="false">${iconSettings()}<span>设置</span></button>
       </nav>
     </div>
@@ -308,6 +250,9 @@ function iconCalendar() {
 }
 function iconArrow() {
   return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 12h14M14 7l5 5-5 5"/></svg>`;
+}
+function iconBell() {
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 22h4"/></svg>`;
 }
 function iconWeather() {
   return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M7 17.5a4 4 0 1 1 .4-8A5.5 5.5 0 0 1 18 11a3.3 3.3 0 1 1-.5 6.5H7Z"/><path d="M9 21l1-1.5M14 21l1-1.5"/></svg>`;
