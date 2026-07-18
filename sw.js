@@ -1,4 +1,4 @@
-const APP_VERSION = "20260718.1";
+const APP_VERSION = "20260718.4";
 const CACHE_NAME = `yoyuan-ledger-${APP_VERSION}`;
 const STATIC_ASSETS = [
   "./",
@@ -12,6 +12,7 @@ const STATIC_ASSETS = [
   "./styles/serene.css",
   "./styles/ios-reminder.css",
   "./styles/xiaoman.css",
+  "./styles/themes.css",
   "./scripts/app.js",
   "./scripts/config.js",
   "./scripts/state.js",
@@ -23,10 +24,11 @@ const STATIC_ASSETS = [
   "./scripts/utils/format.js",
   "./scripts/views/render.js",
   "./scripts/views/shell.js",
-  "./assets/icons/app-icon-v3.svg",
-  "./assets/icons/app-icon-v3-192.png",
-  "./assets/icons/app-icon-v3-512.png",
-  "./assets/icons/apple-touch-icon-v3.png"
+  "./assets/icons/app-icon-star-192.png",
+  "./assets/icons/app-icon-star-512.png",
+  "./assets/icons/apple-touch-icon-star.png",
+  "./assets/themes/twinkle-theme.jpg",
+  "./assets/themes/jay-theme.jpg"
 ];
 
 self.addEventListener("install", (event) => {
@@ -58,14 +60,14 @@ self.addEventListener("fetch", (event) => {
 
 self.addEventListener("push", (event) => {
   const payload = event.data ? safeParse(event.data.text()) : {};
-  const title = payload.title || "小满";
+  const title = payload.title || "星期";
   const body = payload.body || "一条新的提醒已经到达。";
 
   event.waitUntil(
     self.registration.showNotification(title, {
       body,
-      icon: "./assets/icons/app-icon-v3-192.png",
-      badge: "./assets/icons/app-icon-v3-192.png",
+      icon: "./assets/icons/app-icon-star-192.png",
+      badge: "./assets/icons/app-icon-star-192.png",
       tag: payload.tag || "salary-reminder",
       data: {
         url: payload.url || "/"

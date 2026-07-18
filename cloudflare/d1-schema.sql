@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS salary_push_subscriptions (
   timezone TEXT NOT NULL DEFAULT 'Asia/Shanghai',
   enabled INTEGER NOT NULL DEFAULT 1,
   permission TEXT NOT NULL DEFAULT 'default',
-  app_name TEXT NOT NULL DEFAULT '小满',
+  app_name TEXT NOT NULL DEFAULT '星期',
   user_agent TEXT NOT NULL DEFAULT '',
   last_sent_key TEXT NOT NULL DEFAULT '',
   last_sent_at TEXT NOT NULL DEFAULT '',

@@ -1,4 +1,4 @@
-import { DEFAULT_STATE, STORAGE_KEY } from "./config.js";
+import { APP_THEMES, DEFAULT_STATE, DEFAULT_THEME, STORAGE_KEY } from "./config.js";
 
 const state = loadState();
 
@@ -37,6 +37,11 @@ export function deleteReminder(id) {
 
 export function setReminderFilter(filter) {
   state.preferences.reminderFilter = filter;
+  persistState();
+}
+
+export function setTheme(theme) {
+  state.preferences.theme = normalizeTheme(theme);
   persistState();
 }
 
@@ -153,13 +158,19 @@ function normalizeState(raw) {
     reminders: Array.isArray(raw?.reminders) ? raw.reminders.map(normalizeReminder) : [],
     preferences: {
       ...base.preferences,
-      ...(raw?.preferences || {})
+      ...(raw?.preferences || {}),
+      theme: normalizeTheme(raw?.preferences?.theme)
     },
     weather: {
       ...base.weather,
       ...(raw?.weather || {})
     }
   };
+}
+
+function normalizeTheme(theme) {
+  const value = String(theme || DEFAULT_THEME);
+  return Object.hasOwn(APP_THEMES, value) ? value : DEFAULT_THEME;
 }
 
 function normalizeReminder(entry) {

@@ -1,4 +1,4 @@
-import { APP_META, REMINDER_FILTERS } from "./config.js";
+import { APP_META, APP_THEMES, DEFAULT_THEME, REMINDER_FILTERS } from "./config.js";
 import {
   addReminder,
   deleteReminder,
@@ -6,6 +6,7 @@ import {
   getState,
   replaceSyncedData,
   setReminderFilter,
+  setTheme,
   setWeatherFailure,
   setWeatherPending,
   setWeatherSuccess,
@@ -35,6 +36,7 @@ import {
   createRefs,
   populateSalaryOptions,
   renderDashboard,
+  renderAppearancePanel,
   renderOverviewWeather,
   renderPushPanel,
   renderReminderBoard,
@@ -51,6 +53,7 @@ boot();
 
 function boot() {
   document.title = APP_META.productName;
+  applyTheme(getState().preferences.theme);
   const root = document.querySelector("#app");
   root.innerHTML = createShell();
 
@@ -71,6 +74,15 @@ function bindEvents(refs) {
   const root = document.querySelector("#app");
 
   root?.addEventListener("click", (event) => {
+    const themeButton = event.target instanceof Element ? event.target.closest("[data-theme-option]") : null;
+    if (themeButton) {
+      const theme = themeButton.dataset.themeOption;
+      setTheme(theme);
+      applyTheme(theme);
+      renderAll(refs);
+      return;
+    }
+
     const weatherButton = event.target instanceof Element ? event.target.closest("[data-refresh-weather]") : null;
     if (weatherButton) {
       refreshWeather(refs);
@@ -296,6 +308,8 @@ function bindEvents(refs) {
 
 function renderAll(refs) {
   const state = getState();
+  applyTheme(state.preferences.theme);
+  renderAppearancePanel(state, refs);
   renderDashboard(state, refs);
   renderSalaryPanel(state, refs);
   renderPushPanel(state, refs, getPushCapabilities());
@@ -303,6 +317,12 @@ function renderAll(refs) {
   renderReminderBoard(state, refs);
   renderCloudPanel(refs);
   syncViewState(refs);
+}
+
+function applyTheme(theme) {
+  const nextTheme = Object.hasOwn(APP_THEMES, theme) ? theme : DEFAULT_THEME;
+  document.documentElement.dataset.theme = nextTheme;
+  document.querySelector('meta[name="theme-color"]')?.setAttribute("content", APP_THEMES[nextTheme].themeColor);
 }
 
 async function hydrateDefaultWeather(refs, state) {

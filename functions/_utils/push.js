@@ -7,7 +7,7 @@ export function normalizePushPayload(payload) {
   const leadDays = clampInteger(payload?.leadDays, 0, 7, 0);
   const reminderHour = clampInteger(payload?.reminderHour, 0, 23, 9);
   const permission = String(payload?.permission || "default").trim() || "default";
-  const appName = String(payload?.appName || "小满").trim() || "小满";
+  const appName = String(payload?.appName || "星期").trim() || "星期";
 
   return {
     installationId,

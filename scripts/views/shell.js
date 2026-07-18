@@ -1,3 +1,5 @@
+import { APP_THEMES } from "../config.js";
+
 export function createShell() {
   return `
     <div class="page-noise"></div>
@@ -5,8 +7,9 @@ export function createShell() {
     <div class="app-shell">
       <header class="app-header">
         <div class="brand-lockup">
-          <button class="brand" data-switch-view="overview" type="button" aria-label="返回小满首页">
-            <span>小满</span>
+          <button class="brand" data-switch-view="overview" type="button" aria-label="返回星期首页">
+            <span class="brand__mark" aria-hidden="true"><img src="./assets/icons/app-icon-star-192.png?v=20260718.4" alt="" width="38" height="38" /></span>
+            <span>星期</span>
           </button>
           <p id="todayLabel">--</p>
         </div>
@@ -86,7 +89,7 @@ export function createShell() {
           <header class="page-intro">
             <div class="section-kicker"><span>事项</span><span class="section-kicker__line"></span></div>
             <h1>安排一件事</h1>
-            <p>记下日期和提醒时刻，到时由小满轻轻提醒你。</p>
+            <p>记下日期和提醒时刻，到点让小星轻轻提醒你。</p>
           </header>
           <article class="journal-card graph-paper form-card">
             <form id="reminderForm" class="stack-form">
@@ -158,6 +161,20 @@ export function createShell() {
           </header>
 
           <section class="settings-grid">
+            <article class="journal-card appearance-card" aria-labelledby="appearanceTitle">
+              <div class="card-heading">
+                <div>
+                  <h2 id="appearanceTitle">外观与主题</h2>
+                  <p>一键换肤，选择会自动保存在这台设备。</p>
+                </div>
+                <span id="themeStatusBadge" class="soft-chip">默认绿</span>
+              </div>
+              <div class="theme-picker" role="group" aria-label="选择应用主题">
+                ${Object.entries(APP_THEMES).map(([id, theme]) => themeOption(id, theme)).join("")}
+              </div>
+              <p class="appearance-card__note">主题只改变应用内外观。桌面名称和星星人图标更新后，需要重新添加到主屏幕。</p>
+            </article>
+
             <article class="journal-card graph-paper form-card">
               <div class="card-heading"><div><h2>发薪设置</h2><p>修改后会立即保存在本机</p></div></div>
               <form id="salaryForm" class="stack-form">
@@ -244,6 +261,17 @@ function hourOptions() {
     const selected = hour === 9 ? " selected" : "";
     return `<option value="${hour}"${selected}>${value}:00</option>`;
   }).join("");
+}
+
+function themeOption(id, theme) {
+  const artworkStyle = theme.artwork ? ` style="--theme-preview-image: url('${theme.artwork}')"` : "";
+  return `
+    <button class="theme-option theme-option--${id}${theme.artwork ? " theme-option--artwork" : ""}" data-theme-option="${id}" type="button" aria-pressed="false">
+      <span class="theme-option__preview"${artworkStyle} aria-hidden="true"></span>
+      <span class="theme-option__copy"><strong>${theme.label}</strong><small>${theme.description}</small></span>
+      <span class="theme-option__tag">${theme.tag}</span>
+    </button>
+  `;
 }
 
 function iconCalendar() {

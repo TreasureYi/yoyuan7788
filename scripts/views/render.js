@@ -1,4 +1,4 @@
-import { REMINDER_FILTERS, WEATHER_CODES } from "../config.js";
+import { APP_THEMES, REMINDER_FILTERS, WEATHER_CODES } from "../config.js";
 import {
   formatCountdown,
   formatDateLong,
@@ -68,8 +68,20 @@ export function createRefs(root) {
     recoveryCodeInput: root.querySelector("#recoveryCodeInput"),
     cloudSyncState: root.querySelector("#cloudSyncState"),
     clearAppCacheButton: root.querySelector("#clearAppCacheButton"),
-    appMaintenanceState: root.querySelector("#appMaintenanceState")
+    appMaintenanceState: root.querySelector("#appMaintenanceState"),
+    themeStatusBadge: root.querySelector("#themeStatusBadge"),
+    themeButtons: Array.from(root.querySelectorAll("[data-theme-option]"))
   };
+}
+
+export function renderAppearancePanel(state, refs) {
+  const theme = state.preferences.theme;
+  refs.themeStatusBadge.textContent = APP_THEMES[theme]?.label || APP_THEMES.forest.label;
+  refs.themeButtons.forEach((button) => {
+    const isActive = button.dataset.themeOption === theme;
+    button.classList.toggle("is-active", isActive);
+    button.setAttribute("aria-pressed", String(isActive));
+  });
 }
 
 export function populateSalaryOptions(select, currentDay) {
@@ -219,7 +231,7 @@ function renderPushNudge(refs, capabilities, notification, state) {
 
   if (notification.permission === "denied") {
     refs.pushNudgeTitle.textContent = "通知权限已关闭";
-    refs.pushNudgeText.textContent = "请在 iPhone 设置中允许“小满”发送通知。";
+    refs.pushNudgeText.textContent = "请在 iPhone 设置中允许“星期”发送通知。";
     return;
   }
 

@@ -1,13 +1,39 @@
 export const STORAGE_KEY = "yoyuan-ledger:v2";
 export const INSTALLATION_KEY = "yoyuan-ledger:installation-id";
 export const RECOVERY_CODE_KEY = "yoyuan-ledger:recovery-code";
-export const APP_VERSION = "20260718.1";
+export const APP_VERSION = "20260718.4";
 
 export const APP_META = {
-  productName: "小满",
+  productName: "星期",
   descriptor: "Payday, weather and personal reminders",
   version: APP_VERSION
 };
+
+export const APP_THEMES = {
+  forest: {
+    label: "默认绿",
+    description: "清爽青绿，保持现在的外观",
+    tag: "默认",
+    themeColor: "#f4f7f5",
+    artwork: ""
+  },
+  twinkle: {
+    label: "星星人",
+    description: "粉彩云朵与治愈星光",
+    tag: "泡泡玛特",
+    themeColor: "#fff2e8",
+    artwork: "/assets/themes/twinkle-theme.jpg"
+  },
+  jay: {
+    label: "周杰伦",
+    description: "钢琴、黑胶与舞台夜色",
+    tag: "音乐",
+    themeColor: "#12131a",
+    artwork: "/assets/themes/jay-theme.jpg"
+  }
+};
+
+export const DEFAULT_THEME = "forest";
 
 export const REMINDER_CATEGORIES = ["账单", "会员", "证件", "合同", "家庭", "其他"];
 
@@ -37,7 +63,8 @@ export const DEFAULT_STATE = {
   reminders: [],
   preferences: {
     city: "",
-    reminderFilter: REMINDER_FILTERS.all
+    reminderFilter: REMINDER_FILTERS.all,
+    theme: DEFAULT_THEME
   },
   weather: {
     status: "idle",

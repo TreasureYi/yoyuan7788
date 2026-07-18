@@ -137,8 +137,8 @@ export async function sendLocalTestNotification() {
   const registration = await navigator.serviceWorker.ready;
   await registration.showNotification("提醒测试", {
     body: "这是一条本机测试通知。如果你看到了它，说明工资和事项提醒均可在当前设备正常发送。",
-    icon: "./assets/icons/app-icon-v3-192.png",
-    badge: "./assets/icons/app-icon-v3-192.png",
+    icon: "./assets/icons/app-icon-star-192.png",
+    badge: "./assets/icons/app-icon-star-192.png",
     tag: "salary-test",
     data: {
       url: "/"
