@@ -4,34 +4,38 @@ export function createShell() {
 
     <div class="app-shell">
       <header class="app-header">
-        <button class="brand" data-switch-view="overview" type="button" aria-label="返回薪资概览">
-          <span class="brand__mark" aria-hidden="true">${iconLeaf()}</span>
-          <span>薪期提醒</span>
-        </button>
+        <div class="brand-lockup">
+          <button class="brand" data-switch-view="overview" type="button" aria-label="返回小满首页">
+            <span>小满</span>
+          </button>
+          <p id="todayLabel">--</p>
+        </div>
         <button class="icon-button" data-switch-view="compose" type="button" aria-label="新增事项">
-          ${iconPlusCircle()}
+          ${iconPlus()}
         </button>
       </header>
 
       <main class="workspace">
         <section class="view view--overview is-active" data-view="overview">
-          <header class="overview-intro">
-            <p class="overview-intro__eyebrow" id="overviewMonth">--</p>
-            <h1>今天要记得什么？</h1>
-            <p id="todayLabel">把发薪和重要事项放在一起，按需要提醒。</p>
+          <header class="overview-intro sr-only">
+            <p id="overviewMonth">--</p>
+            <h1>今日生活概览</h1>
           </header>
 
           <div class="overview-stack">
             <article class="salary-snapshot">
               <div class="salary-snapshot__header">
                 <div>
-                  <p class="salary-snapshot__eyebrow">下次发薪</p>
+                  <p class="salary-snapshot__eyebrow">距离下次发薪</p>
                   <p id="salaryStatus">--</p>
                 </div>
-                <span class="salary-snapshot__date" id="salaryDate">--</span>
               </div>
-              <div class="salary-snapshot__countdown">
-                <strong id="salaryCountdown">--</strong><span id="salaryCountdownUnit">天</span>
+              <div class="salary-snapshot__main">
+                <div class="salary-snapshot__countdown">
+                  <strong id="salaryCountdown">--</strong><span id="salaryCountdownUnit">天</span>
+                </div>
+                <div class="salary-snapshot__calendar" aria-hidden="true">${iconCalendar()}</div>
+                <span class="salary-snapshot__date" id="salaryDate">--</span>
               </div>
               <div class="salary-snapshot__details">
                 <div><span>收入</span><strong id="salaryAmountDisplay">--</strong></div>
@@ -51,12 +55,12 @@ export function createShell() {
             <article class="journal-card reminders-card" id="board">
               <div class="section-head">
                 <div>
-                  <h2 class="section-title">事项</h2>
+                  <h2 class="section-title">临近事项</h2>
                   <p id="reminderSummaryMeta" class="section-head__meta">暂时没有待办</p>
                 </div>
                 <div class="section-head__actions">
                   <span id="reminderCount" class="soft-chip">0 条</span>
-                  <button class="button button--primary button--compact" data-switch-view="compose" type="button">新建</button>
+                  <button class="section-arrow" data-switch-view="compose" type="button" aria-label="新建事项">${iconChevron()}</button>
                 </div>
               </div>
               <span id="reminderSummaryValue" class="sr-only">0</span>
@@ -67,14 +71,22 @@ export function createShell() {
               </div>
               <div id="reminderList" class="reminder-list"></div>
             </article>
+
+            <article class="xm-weather-card" aria-labelledby="overviewWeatherTitle">
+              <div class="xm-weather-card__head">
+                <h2 id="overviewWeatherTitle">天气</h2>
+                <button class="xm-weather-card__location" data-switch-view="weather" type="button">查看详情 ${iconLocation()}</button>
+              </div>
+              <div class="xm-weather-card__slot" data-weather-slot></div>
+            </article>
           </div>
         </section>
 
         <section class="view view--compose" data-view="compose" hidden>
           <header class="page-intro">
-            <div class="section-kicker"><span>新提醒</span><span class="section-kicker__line"></span></div>
+            <div class="section-kicker"><span>事项</span><span class="section-kicker__line"></span></div>
             <h1>安排一件事</h1>
-            <p>不只是记下来，也为它安排一个会出现的时刻。</p>
+            <p>记下日期和提醒时刻，到时由小满轻轻提醒你。</p>
           </header>
           <article class="journal-card graph-paper form-card">
             <form id="reminderForm" class="stack-form">
@@ -128,7 +140,7 @@ export function createShell() {
         <section class="view view--weather" data-view="weather" hidden>
           <header class="page-intro">
             <div class="section-kicker"><span>当前位置</span><span class="section-kicker__line"></span></div>
-            <h1>天气速览</h1>
+            <h1>天气</h1>
             <p>轻点卡片即可重新定位并刷新天气。</p>
           </header>
           <article class="journal-card graph-paper weather-page-card">
@@ -141,7 +153,7 @@ export function createShell() {
         <section class="view view--settings" data-view="settings" hidden>
           <header class="page-intro">
             <div class="section-kicker"><span>个人设置</span><span class="section-kicker__line"></span></div>
-            <h1>我的设置</h1>
+            <h1>我的</h1>
             <p>管理发薪规则、通知，以及数据保存方式。</p>
           </header>
 
@@ -217,9 +229,10 @@ export function createShell() {
       </main>
 
       <nav class="bottom-tabs" aria-label="主导航">
-        <button class="bottom-tabs__item is-active" data-switch-view="overview" data-tab-button type="button" aria-selected="true">${iconDashboard()}<span>概览</span></button>
-        <button class="bottom-tabs__item" data-switch-view="compose" data-tab-button type="button" aria-selected="false">${iconPlus()}<span>新提醒</span></button>
-        <button class="bottom-tabs__item" data-switch-view="settings" data-tab-button type="button" aria-selected="false">${iconSettings()}<span>设置</span></button>
+        <button class="bottom-tabs__item is-active" data-switch-view="overview" data-tab-button type="button" aria-current="page">${iconHome()}<span>首页</span></button>
+        <button class="bottom-tabs__item" data-switch-view="compose" data-tab-button type="button">${iconChecklist()}<span>事项</span></button>
+        <button class="bottom-tabs__item" data-switch-view="weather" data-tab-button type="button">${iconWeather()}<span>天气</span></button>
+        <button class="bottom-tabs__item" data-switch-view="settings" data-tab-button type="button">${iconUser()}<span>我的</span></button>
       </nav>
     </div>
   `;
@@ -233,23 +246,14 @@ function hourOptions() {
   }).join("");
 }
 
-function iconLeaf() {
-  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21c-4-2.2-6.5-5.4-6.5-9.2 3.8 0 6.5 2.3 6.5 5.8 0-5.2 2.3-9.1 6.5-11.6.6 6.7-1.6 11.9-6.5 15Z"/><path d="M12 11.5C10.1 8.4 7.9 6.3 5.2 5c-.7 3.3.1 5.7 2.1 7.4"/></svg>`;
-}
-function iconPlusCircle() {
-  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 8v8M8 12h8"/></svg>`;
-}
-function iconWallet() {
-  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 9.5h18"/><circle cx="17" cy="14" r="1.2" fill="currentColor"/></svg>`;
-}
-function iconCard() {
-  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h4"/></svg>`;
-}
 function iconCalendar() {
   return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18M8 14h3M8 17h6"/></svg>`;
 }
-function iconArrow() {
-  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 12h14M14 7l5 5-5 5"/></svg>`;
+function iconChevron() {
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>`;
+}
+function iconLocation() {
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>`;
 }
 function iconBell() {
   return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 22h4"/></svg>`;
@@ -260,12 +264,15 @@ function iconWeather() {
 function iconDatabase() {
   return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg>`;
 }
-function iconDashboard() {
-  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg>`;
+function iconHome() {
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1V10Z"/></svg>`;
 }
 function iconPlus() {
   return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>`;
 }
-function iconSettings() {
-  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4V21a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H2.8v-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1a1.7 1.7 0 0 0 1.9.3A1.7 1.7 0 0 0 10 3v-.2h4V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1Z"/></svg>`;
+function iconChecklist() {
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 3h6v3H9zM9 11l1.5 1.5L14 9M9 16h6"/></svg>`;
+}
+function iconUser() {
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c.8-4.1 3.5-6 8-6s7.2 1.9 8 6"/></svg>`;
 }

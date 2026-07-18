@@ -1,4 +1,4 @@
-const APP_VERSION = "20260715.1";
+const APP_VERSION = "20260718.1";
 const CACHE_NAME = `yoyuan-ledger-${APP_VERSION}`;
 const STATIC_ASSETS = [
   "./",
@@ -11,6 +11,7 @@ const STATIC_ASSETS = [
   "./styles/components.css",
   "./styles/serene.css",
   "./styles/ios-reminder.css",
+  "./styles/xiaoman.css",
   "./scripts/app.js",
   "./scripts/config.js",
   "./scripts/state.js",
@@ -57,7 +58,7 @@ self.addEventListener("fetch", (event) => {
 
 self.addEventListener("push", (event) => {
   const payload = event.data ? safeParse(event.data.text()) : {};
-  const title = payload.title || "薪期提醒";
+  const title = payload.title || "小满";
   const body = payload.body || "一条新的提醒已经到达。";
 
   event.waitUntil(

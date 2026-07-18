@@ -1,0 +1,927 @@
+/* Xiaoman: calm, glanceable life reminders inspired by the selected mobile concept. */
+:root {
+  color-scheme: light dark;
+  --bg: #f4f7f5;
+  --surface: #ffffff;
+  --surface-strong: #ffffff;
+  --surface-muted: #edf5f0;
+  --text: #10261f;
+  --text-muted: #63716c;
+  --text-soft: #84908c;
+  --text-inverse: #f7fbf8;
+  --accent: #1e5947;
+  --accent-strong: #123f32;
+  --accent-soft: #e4f2ea;
+  --accent-warm: #b66a00;
+  --accent-warm-soft: #fff1c9;
+  --weather-sun: #f7b500;
+  --line: rgba(16, 38, 31, 0.09);
+  --line-strong: rgba(16, 38, 31, 0.16);
+  --danger: #a33a3a;
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
+  --radius-xl: 26px;
+  --radius-2xl: 30px;
+  --page-width: 720px;
+  --page-pad: clamp(18px, 5vw, 32px);
+  --gap-section: 20px;
+  --tabbar-height: 82px;
+  --shadow-sm: 0 1px 2px rgba(16, 38, 31, 0.04), 0 10px 28px rgba(16, 38, 31, 0.07);
+  --shadow-md: 0 2px 4px rgba(16, 38, 31, 0.06), 0 18px 42px rgba(16, 38, 31, 0.12);
+  --font-display: "SF Pro Rounded", "Avenir Next", "PingFang SC", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: "SF Pro Text", "PingFang SC", -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+html,
+body {
+  min-height: 100%;
+  background: var(--bg);
+}
+
+body {
+  color: var(--text);
+  background:
+    radial-gradient(circle at 50% -12rem, rgba(208, 226, 216, 0.34), transparent 30rem),
+    var(--bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.view h1[tabindex="-1"]:focus {
+  outline: none;
+}
+
+.page-noise {
+  display: none;
+}
+
+.app-shell {
+  width: min(var(--page-width), 100%);
+  min-height: 100dvh;
+  padding:
+    max(20px, env(safe-area-inset-top))
+    var(--page-pad)
+    calc(var(--tabbar-height) + 34px + env(safe-area-inset-bottom));
+}
+
+.workspace,
+.view {
+  gap: 0;
+}
+
+.app-header {
+  position: relative;
+  top: auto;
+  z-index: 10;
+  min-height: 92px;
+  margin: 0;
+  padding: 12px 0 18px;
+  background: transparent;
+  backdrop-filter: none;
+}
+
+.brand-lockup {
+  min-width: 0;
+}
+
+.brand {
+  display: inline-flex;
+  min-height: 44px;
+  padding: 0;
+  color: var(--accent-strong);
+  font-family: var(--font-display);
+  font-size: clamp(2.2rem, 10vw, 3.25rem);
+  font-weight: 760;
+  line-height: 1;
+  letter-spacing: -0.07em;
+}
+
+.brand-lockup p {
+  margin: 8px 0 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  font-weight: 620;
+}
+
+.icon-button {
+  width: 58px;
+  height: 58px;
+  padding: 15px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 50%;
+  color: var(--text-inverse);
+  background: var(--accent-strong);
+  box-shadow: 0 12px 26px rgba(18, 63, 50, 0.2);
+  transition: transform 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
+}
+
+.icon-button:hover {
+  background: #0d362a;
+  box-shadow: 0 14px 30px rgba(18, 63, 50, 0.26);
+}
+
+.icon-button:active {
+  transform: scale(0.94);
+}
+
+.icon-button svg {
+  width: 100%;
+  height: 100%;
+  stroke-width: 1.7;
+}
+
+.overview-stack {
+  display: grid;
+  gap: 20px;
+  padding-top: 10px;
+}
+
+.salary-snapshot {
+  position: relative;
+  display: grid;
+  gap: 16px;
+  min-height: 300px;
+  overflow: hidden;
+  padding: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-2xl);
+  color: var(--text-inverse);
+  background:
+    radial-gradient(circle at 84% 15%, rgba(255, 255, 255, 0.07), transparent 35%),
+    linear-gradient(145deg, #174d3d, #0f382d);
+  box-shadow: 0 18px 36px rgba(18, 63, 50, 0.21);
+}
+
+.salary-snapshot::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  opacity: 0.14;
+  pointer-events: none;
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.28) 0.65px, transparent 0.7px);
+  background-size: 9px 9px;
+  -webkit-mask-image: linear-gradient(130deg, black, transparent 74%);
+  mask-image: linear-gradient(130deg, black, transparent 74%);
+}
+
+.salary-snapshot__header,
+.salary-snapshot__main,
+.salary-snapshot__details {
+  position: relative;
+  z-index: 1;
+}
+
+.salary-snapshot__header {
+  align-items: flex-start;
+}
+
+.salary-snapshot__eyebrow {
+  color: rgba(247, 251, 248, 0.92);
+  font-size: 1rem;
+  font-weight: 680;
+}
+
+.salary-snapshot #salaryStatus {
+  margin-top: 5px;
+  color: rgba(247, 251, 248, 0.62);
+  font-size: 0.75rem;
+  font-weight: 560;
+}
+
+.salary-snapshot__main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: 1fr auto;
+  align-items: end;
+  gap: 4px 20px;
+}
+
+.salary-snapshot__countdown {
+  align-self: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.salary-snapshot__countdown strong {
+  color: #ffffff;
+  font-size: clamp(5.5rem, 27vw, 8rem);
+  font-weight: 760;
+  font-variant-numeric: tabular-nums;
+  line-height: 0.76;
+  letter-spacing: -0.1em;
+}
+
+.salary-snapshot__countdown span {
+  color: #ffffff;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.salary-snapshot__calendar {
+  display: grid;
+  width: 86px;
+  height: 86px;
+  place-items: center;
+  align-self: center;
+  color: rgba(219, 239, 228, 0.3);
+}
+
+.salary-snapshot__calendar svg {
+  width: 100%;
+  height: 100%;
+  stroke-width: 1.25;
+}
+
+.salary-snapshot__date {
+  grid-column: 2;
+  max-width: 11rem;
+  color: rgba(247, 251, 248, 0.84);
+  font-size: 0.83rem;
+  font-weight: 620;
+  text-align: right;
+}
+
+.salary-snapshot__details {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.salary-snapshot__details div {
+  min-width: 0;
+}
+
+.salary-snapshot__details span {
+  color: rgba(247, 251, 248, 0.56);
+}
+
+.salary-snapshot__details strong {
+  color: rgba(247, 251, 248, 0.94);
+}
+
+.notification-nudge {
+  padding: 14px 16px;
+  border-color: rgba(182, 106, 0, 0.16);
+  border-radius: var(--radius-md);
+  background: #fffaf0;
+  box-shadow: none;
+}
+
+.notification-nudge__icon {
+  color: var(--accent-warm);
+  background: var(--accent-warm-soft);
+}
+
+.notification-nudge .button--secondary {
+  border-color: rgba(182, 106, 0, 0.18);
+  color: #754600;
+  background: var(--accent-warm-soft);
+}
+
+.journal-card,
+.graph-paper {
+  background-image: none;
+}
+
+.reminders-card {
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-2xl);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.section-head {
+  margin-bottom: 8px;
+}
+
+.section-title,
+.card-heading h2,
+.data-note h2 {
+  color: var(--text);
+  font-size: 1.18rem;
+  font-weight: 740;
+  letter-spacing: -0.03em;
+}
+
+.section-head__meta {
+  margin-top: 4px;
+  color: var(--text-soft);
+}
+
+.section-head__actions {
+  gap: 6px;
+}
+
+.soft-chip {
+  min-height: 30px;
+  padding: 5px 11px;
+  border: 0;
+  border-radius: 999px;
+  color: var(--text-muted);
+  background: var(--surface-muted);
+  font-size: 0.75rem;
+}
+
+.section-arrow {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  padding: 10px;
+  border: 0;
+  border-radius: 50%;
+  color: var(--text-muted);
+  background: transparent;
+}
+
+.section-arrow:hover {
+  color: var(--accent-strong);
+  background: var(--accent-soft);
+}
+
+.section-arrow svg {
+  width: 22px;
+  height: 22px;
+}
+
+.filters {
+  gap: 8px;
+  margin: 12px 0 4px;
+}
+
+.filter {
+  min-height: 36px;
+  padding: 7px 12px;
+  border: 0;
+  border-radius: 999px;
+  color: var(--text-muted);
+  background: var(--surface-muted);
+}
+
+.filter.is-active {
+  color: var(--text-inverse);
+  background: var(--accent);
+}
+
+.reminder-list {
+  display: grid;
+  gap: 0;
+}
+
+.reminder-item {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) auto;
+  grid-template-areas: "icon body side";
+  align-items: center;
+  gap: 14px;
+  min-height: 96px;
+  padding: 18px 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.reminder-item + .reminder-item {
+  border-top: 1px solid var(--line);
+}
+
+.reminder-item__icon {
+  display: grid;
+  width: 52px;
+  height: 52px;
+  place-items: center;
+  margin: 0;
+  border-radius: 50%;
+  color: var(--accent-strong);
+  background: var(--accent-soft);
+}
+
+.reminder-item__icon svg {
+  width: 24px;
+  height: 24px;
+  stroke-width: 1.8;
+}
+
+.reminder-item__body {
+  min-width: 0;
+  align-self: center;
+}
+
+.reminder-item__title-row {
+  display: block;
+}
+
+.reminder-item .badge {
+  display: none;
+}
+
+.reminder-item__title {
+  margin: 0;
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.reminder-item__meta,
+.reminder-item__notification,
+.reminder-item__notes {
+  margin: 4px 0 0;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+.reminder-item__notification {
+  font-weight: 520;
+}
+
+.reminder-item__notes {
+  display: none;
+}
+
+.reminder-item__side {
+  display: grid;
+  justify-items: end;
+  align-content: center;
+  gap: 8px;
+  min-width: 68px;
+  align-self: center;
+}
+
+.countdown {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  color: var(--accent-warm);
+  background: var(--accent-warm-soft);
+  font-size: 0.82rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.reminder-item--overdue .countdown {
+  color: var(--danger);
+  background: #fde8e8;
+}
+
+.reminder-item__actions {
+  gap: 8px;
+}
+
+.reminder-item__actions .button--link {
+  min-height: 32px;
+  padding: 4px;
+  color: var(--text-soft);
+  font-size: 0.68rem;
+}
+
+.empty-state--quiet {
+  min-height: 150px;
+  margin-top: 12px;
+  padding: 38px 16px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-lg);
+  color: var(--text-muted);
+  background: var(--surface-muted);
+}
+
+.empty-state--quiet .empty-state__title::after {
+  display: none;
+  content: none;
+}
+
+.empty-state__hint {
+  margin: 6px 0 0;
+  color: var(--text-soft);
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.xm-weather-card {
+  overflow: hidden;
+  padding: 22px;
+  border: 1px solid rgba(30, 89, 71, 0.11);
+  border-radius: var(--radius-2xl);
+  background:
+    radial-gradient(circle at 15% 80%, rgba(255, 255, 255, 0.72), transparent 32%),
+    linear-gradient(135deg, #e8f5ed, #dcefe5);
+  box-shadow: var(--shadow-sm);
+}
+
+.xm-weather-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.xm-weather-card__head h2 {
+  margin: 0;
+  font-size: 1.18rem;
+  letter-spacing: -0.03em;
+}
+
+.xm-weather-card__location {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 44px;
+  padding: 8px 2px 8px 12px;
+  border: 0;
+  color: var(--text-muted);
+  background: transparent;
+  font-size: 0.78rem;
+}
+
+.xm-weather-card__location svg,
+.xm-weather-card__location > span {
+  width: 18px;
+  height: 18px;
+  color: var(--accent);
+}
+
+.xm-weather-card__content {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+  min-height: 112px;
+  padding: 14px 0 4px;
+  border: 0;
+  color: var(--text);
+  background: transparent;
+  text-align: left;
+}
+
+.xm-weather-card__icon {
+  display: grid;
+  width: 72px;
+  height: 72px;
+  place-items: center;
+  color: var(--weather-sun);
+}
+
+.xm-weather-card__icon svg {
+  width: 100%;
+  height: 100%;
+  stroke-width: 2;
+}
+
+.xm-weather-card__copy strong,
+.xm-weather-card__copy small {
+  display: block;
+}
+
+.xm-weather-card__copy strong {
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: clamp(1.55rem, 7vw, 2.25rem);
+  font-weight: 750;
+  letter-spacing: -0.05em;
+}
+
+.xm-weather-card__copy small {
+  margin-top: 7px;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.page-intro {
+  padding: 18px 0 0;
+}
+
+.section-kicker {
+  color: var(--accent);
+}
+
+.section-kicker__line {
+  background: var(--line-strong);
+}
+
+.page-intro h1 {
+  margin: 12px 0 6px;
+  color: var(--text);
+  font-size: clamp(2rem, 9vw, 3rem);
+  font-weight: 760;
+  letter-spacing: -0.06em;
+}
+
+.page-intro p {
+  color: var(--text-muted);
+}
+
+.form-card,
+.view--compose .form-card,
+.weather-page-card {
+  margin-top: 22px;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-2xl);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.settings-grid {
+  grid-template-columns: 1fr;
+  gap: 18px;
+  padding-top: 22px;
+}
+
+.settings-grid > * {
+  grid-column: 1 / -1;
+}
+
+.card-heading p,
+.form-note,
+.timing-hint,
+.cloud-warning,
+.data-note p {
+  color: var(--text-muted);
+}
+
+.reminder-timing,
+.settings-list__row {
+  border-color: var(--line);
+  background: var(--surface-muted);
+}
+
+.input,
+.select,
+.textarea {
+  min-height: 48px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  background: var(--surface);
+  box-shadow: none;
+}
+
+.input:focus,
+.select:focus,
+.textarea:focus {
+  border-color: var(--accent);
+  outline: 3px solid rgba(30, 89, 71, 0.16);
+}
+
+.button--primary {
+  border-color: var(--accent-strong);
+  color: var(--text-inverse);
+  background: var(--accent-strong);
+  box-shadow: none;
+}
+
+.button--primary:hover {
+  background: #0d362a;
+}
+
+.button--secondary {
+  border-color: var(--line-strong);
+  color: var(--accent-strong);
+  background: var(--surface);
+}
+
+.reminder-switch__control {
+  background: var(--line-strong);
+}
+
+.reminder-switch input:checked + .reminder-switch__control {
+  background: var(--accent);
+}
+
+.weather-page-card__orb {
+  color: var(--weather-sun);
+  background: var(--surface-muted);
+}
+
+.data-note {
+  border-color: rgba(30, 89, 71, 0.12);
+  background: var(--accent-soft);
+}
+
+.data-note__icon {
+  color: var(--accent-strong);
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.bottom-tabs {
+  right: max(12px, env(safe-area-inset-right));
+  bottom: 0;
+  left: max(12px, env(safe-area-inset-left));
+  z-index: 100;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  width: auto;
+  max-width: 680px;
+  min-height: calc(var(--tabbar-height) + env(safe-area-inset-bottom));
+  margin: 0 auto;
+  transform: none;
+  padding: 8px 10px max(8px, env(safe-area-inset-bottom));
+  border: 1px solid rgba(16, 38, 31, 0.09);
+  border-bottom: 0;
+  border-radius: 28px 28px 0 0;
+  background: color-mix(in srgb, var(--surface) 91%, transparent);
+  box-shadow: 0 -8px 30px rgba(16, 38, 31, 0.08);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+  backdrop-filter: blur(24px) saturate(1.2);
+}
+
+.bottom-tabs__item {
+  min-width: 0;
+  min-height: 58px;
+  padding: 7px 6px;
+  border-radius: 20px;
+  color: var(--text-soft);
+  transition: color 180ms ease, background-color 180ms ease, transform 180ms ease;
+}
+
+.bottom-tabs__item:hover {
+  color: var(--accent-strong);
+  background: rgba(228, 242, 234, 0.6);
+}
+
+.bottom-tabs__item:active {
+  transform: scale(0.96);
+}
+
+.bottom-tabs__item svg {
+  width: 23px;
+  height: 23px;
+  stroke-width: 1.75;
+}
+
+.bottom-tabs__item span {
+  font-size: 0.7rem;
+  font-weight: 620;
+}
+
+.bottom-tabs__item.is-active {
+  color: var(--accent-strong);
+  background: var(--accent-soft);
+}
+
+.bottom-tabs__item.is-active svg {
+  fill: rgba(30, 89, 71, 0.1);
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid rgba(30, 89, 71, 0.34);
+  outline-offset: 3px;
+}
+
+@media (max-width: 430px) {
+  .app-shell {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+
+  .app-header {
+    min-height: 84px;
+  }
+
+  .brand {
+    font-size: 2.25rem;
+  }
+
+  .brand-lockup p {
+    font-size: 0.8rem;
+  }
+
+  .icon-button {
+    width: 52px;
+    height: 52px;
+    padding: 14px;
+  }
+
+  .salary-snapshot {
+    min-height: 284px;
+    padding: 24px;
+  }
+
+  .salary-snapshot__calendar {
+    width: 68px;
+    height: 68px;
+  }
+
+  .salary-snapshot__details {
+    gap: 8px;
+  }
+
+  .reminders-card,
+  .xm-weather-card,
+  .form-card,
+  .view--compose .form-card,
+  .weather-page-card {
+    padding: 18px;
+  }
+
+  .section-head__actions .soft-chip {
+    display: inline-flex;
+  }
+
+  .reminder-item {
+    grid-template-columns: 46px minmax(0, 1fr) auto;
+    gap: 12px;
+  }
+
+  .reminder-item__icon {
+    width: 46px;
+    height: 46px;
+  }
+
+  .reminder-item__actions {
+    display: none;
+  }
+
+  .split-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .bottom-tabs {
+    right: 8px;
+    left: 8px;
+    padding-right: 8px;
+    padding-left: 8px;
+  }
+}
+
+@media (min-width: 760px) {
+  .app-header {
+    padding-top: 24px;
+  }
+
+  .settings-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .settings-grid > .cloud-backup-card,
+  .settings-grid > .data-note {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0d1713;
+    --surface: #14231d;
+    --surface-strong: #14231d;
+    --surface-muted: #1a2d25;
+    --text: #eef6f1;
+    --text-muted: #a6b7af;
+    --text-soft: #81968c;
+    --text-inverse: #f7fbf8;
+    --accent: #78b49d;
+    --accent-strong: #a7d5c2;
+    --accent-soft: #203c31;
+    --line: rgba(226, 242, 233, 0.09);
+    --line-strong: rgba(226, 242, 233, 0.16);
+    --shadow-sm: 0 10px 28px rgba(0, 0, 0, 0.22);
+    --shadow-md: 0 18px 42px rgba(0, 0, 0, 0.3);
+  }
+
+  body {
+    background:
+      radial-gradient(circle at 50% -12rem, rgba(62, 111, 89, 0.2), transparent 30rem),
+      var(--bg);
+  }
+
+  .icon-button {
+    color: #0e241b;
+    background: #9fd2bd;
+  }
+
+  .salary-snapshot {
+    background: linear-gradient(145deg, #174d3d, #0d3026);
+  }
+
+  .notification-nudge {
+    background: #282313;
+  }
+
+  .xm-weather-card {
+    background: linear-gradient(135deg, #173228, #1d3c30);
+  }
+
+  .bottom-tabs {
+    background: color-mix(in srgb, var(--surface) 91%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .icon-button,
+  .bottom-tabs__item {
+    transform: none !important;
+  }
+}

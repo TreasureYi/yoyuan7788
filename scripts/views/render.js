@@ -1,4 +1,4 @@
-import { REMINDER_FILTERS } from "../config.js";
+import { REMINDER_FILTERS, WEATHER_CODES } from "../config.js";
 import {
   formatCountdown,
   formatDateLong,
@@ -101,7 +101,7 @@ export function renderDashboard(state, refs) {
   if (refs.reminderSummaryValue && refs.reminderSummaryMeta) {
     const upcoming = state.reminders.filter((entry) => getDaysUntil(entry.date) >= 0);
     refs.reminderSummaryValue.textContent = String(upcoming.length);
-    refs.reminderSummaryMeta.textContent = upcoming.length ? "件待办事项" : "暂时没有待办";
+    refs.reminderSummaryMeta.textContent = upcoming.length ? "近期需要处理" : "暂时没有待办";
   }
 }
 
@@ -219,7 +219,7 @@ function renderPushNudge(refs, capabilities, notification, state) {
 
   if (notification.permission === "denied") {
     refs.pushNudgeTitle.textContent = "通知权限已关闭";
-    refs.pushNudgeText.textContent = "请在 iPhone 设置中允许“薪期提醒”发送通知。";
+    refs.pushNudgeText.textContent = "请在 iPhone 设置中允许“小满”发送通知。";
     return;
   }
 
@@ -238,7 +238,18 @@ export function renderOverviewWeather(state, refs) {
 }
 
 function renderWeatherSlot(state, slot) {
+  const isOverviewCard = Boolean(slot.closest(".xm-weather-card"));
+
   if (state.weather.status === "loading") {
+    if (isOverviewCard) {
+      slot.innerHTML = `
+        <button class="xm-weather-card__content is-loading" data-refresh-weather type="button" aria-label="正在获取当前位置天气">
+          <span class="xm-weather-card__icon weather-widget__icon--loading" aria-hidden="true">${getWeatherIconSvg(null)}</span>
+          <span class="xm-weather-card__copy"><strong>正在定位</strong><small>获取你身边的天气</small></span>
+        </button>
+      `;
+      return;
+    }
     slot.innerHTML = `
       <div class="weather-peek__content">
         <span class="weather-peek__icon weather-widget__icon--loading" aria-hidden="true">${getWeatherIconSvg(null)}</span>
@@ -249,6 +260,15 @@ function renderWeatherSlot(state, slot) {
   }
 
   if (state.weather.status === "error") {
+    if (isOverviewCard) {
+      slot.innerHTML = `
+        <button class="xm-weather-card__content" data-refresh-weather type="button">
+          <span class="xm-weather-card__icon" aria-hidden="true">${getWeatherIconSvg(null)}</span>
+          <span class="xm-weather-card__copy"><strong>天气暂不可用</strong><small>轻点重新定位</small></span>
+        </button>
+      `;
+      return;
+    }
     slot.innerHTML = `
       <button class="weather-peek__content" data-refresh-weather type="button">
         <span class="weather-peek__icon" aria-hidden="true">${getWeatherIconSvg(null)}</span>
@@ -259,6 +279,15 @@ function renderWeatherSlot(state, slot) {
   }
 
   if (!state.weather.payload) {
+    if (isOverviewCard) {
+      slot.innerHTML = `
+        <button class="xm-weather-card__content" data-refresh-weather type="button">
+          <span class="xm-weather-card__icon" aria-hidden="true">${getWeatherIconSvg(null)}</span>
+          <span class="xm-weather-card__copy"><strong>查看当前天气</strong><small>轻点允许定位</small></span>
+        </button>
+      `;
+      return;
+    }
     slot.innerHTML = `
       <button class="weather-peek__content" data-refresh-weather type="button">
         <span class="weather-peek__icon" aria-hidden="true">${getWeatherIconSvg(null)}</span>
@@ -269,13 +298,38 @@ function renderWeatherSlot(state, slot) {
   }
 
   const payload = state.weather.payload;
+  if (isOverviewCard) {
+    const condition = WEATHER_CODES[payload.weatherCode] || "天气更新";
+    const city = payload.city || "当前位置";
+    slot.closest(".xm-weather-card")?.querySelector(".xm-weather-card__location")?.replaceChildren(
+      document.createTextNode(city),
+      createLocationIcon()
+    );
+    slot.innerHTML = `
+      <button class="xm-weather-card__content" data-refresh-weather type="button" aria-label="刷新${escapeHtml(city)}天气">
+        <span class="xm-weather-card__icon" aria-hidden="true">${getWeatherIconSvg(payload.weatherCode)}</span>
+        <span class="xm-weather-card__copy">
+          <strong>${escapeHtml(condition)} ${formatTemperature(payload.temperature)}</strong>
+          <small>轻点刷新 · 适合提前安排</small>
+        </span>
+      </button>
+    `;
+    return;
+  }
   slot.innerHTML = `
     <button class="weather-peek__content" data-refresh-weather type="button" aria-label="刷新当前位置天气">
       <span class="weather-peek__icon" aria-hidden="true">${getWeatherIconSvg(payload.weatherCode)}</span>
       <strong>${formatTemperature(payload.temperature)}</strong>
-      <span>${escapeHtml(payload.city)}</span>
+      <span>${escapeHtml(payload.city || "当前位置")}</span>
     </button>
   `;
+}
+
+function createLocationIcon() {
+  const wrapper = document.createElement("span");
+  wrapper.setAttribute("aria-hidden", "true");
+  wrapper.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>`;
+  return wrapper;
 }
 
 export function renderReminderBoard(state, refs) {
@@ -299,6 +353,7 @@ export function renderReminderBoard(state, refs) {
     refs.reminderList.innerHTML = `
       <div class="empty-state empty-state--quiet">
         <p class="empty-state__title">${sorted.length ? "这里没有事项" : "还没有提醒"}</p>
+        <p class="empty-state__hint">${sorted.length ? "换个筛选条件看看。" : "轻点右上角的加号，安排第一件事。"}</p>
       </div>
     `;
     return;
@@ -311,10 +366,10 @@ export function renderReminderBoard(state, refs) {
       const notes = entry.notes || "没有备注";
       const schedule =
         days < 0
-          ? `${formatDateLong(entry.date)} · 逾期 ${Math.abs(days)} 天`
+          ? `${formatDateWithWeekday(entry.date)} · 已逾期`
           : days === 0
-            ? `${formatDateLong(entry.date)} · 今天`
-            : `${formatDateLong(entry.date)} · ${days} 天后`;
+            ? `${formatDateWithWeekday(entry.date)} · 今天`
+            : formatDateWithWeekday(entry.date);
       const notification = entry.notificationEnabled
         ? `推送 ${entry.leadDays ? `提前 ${entry.leadDays} 天 · ` : ""}${formatHour(entry.hour)}`
         : "仅记录，不推送";

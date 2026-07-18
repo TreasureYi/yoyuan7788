@@ -1,11 +1,11 @@
 export const STORAGE_KEY = "yoyuan-ledger:v2";
 export const INSTALLATION_KEY = "yoyuan-ledger:installation-id";
 export const RECOVERY_CODE_KEY = "yoyuan-ledger:recovery-code";
-export const APP_VERSION = "20260715.1";
+export const APP_VERSION = "20260718.1";
 
 export const APP_META = {
-  productName: "薪期提醒",
-  descriptor: "Payday and personal reminder desk",
+  productName: "小满",
+  descriptor: "Payday, weather and personal reminders",
   version: APP_VERSION
 };
 

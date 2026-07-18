@@ -71,7 +71,7 @@ export function formatCountdown(days) {
     return "今天";
   }
 
-  return `${days} 天`;
+  return `${days} 天后`;
 }
 
 export function getSalaryCycleProgress(dayOfMonth, reference = new Date()) {

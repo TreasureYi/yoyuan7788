@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>薪日 · UI 探索</title>
+    <style>
+      :root {
+        --ink: #1d1d1f;
+        --muted: #6e6e73;
+        --line: #e5e5ea;
+        --canvas: #f3f3f7;
+      }
+
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-width: 320px;
+        color: var(--ink);
+        background: var(--canvas);
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", sans-serif;
+      }
+
+      .gallery {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(320px, 390px));
+        gap: 40px;
+        justify-content: center;
+        padding: 56px 32px;
+      }
+
+      .direction { margin: 0; }
+      .direction figcaption {
+        margin: 0 0 14px;
+        font-size: 14px;
+        font-weight: 650;
+        letter-spacing: .01em;
+      }
+      .direction figcaption span {
+        display: block;
+        margin-top: 4px;
+        color: #787880;
+        font-size: 12px;
+        font-weight: 500;
+      }
+
+      .phone {
+        position: relative;
+        min-height: 844px;
+        overflow: hidden;
+        border-radius: 42px;
+        box-shadow: 0 24px 64px rgba(20, 22, 29, .16);
+      }
+      .screen { min-height: 844px; padding: 58px 20px 104px; }
+      .topbar { display: flex; align-items: center; justify-content: space-between; }
+      .eyebrow { margin: 0 0 4px; color: var(--muted); font-size: 13px; font-weight: 590; }
+      h1 { margin: 0; font-size: 32px; line-height: 1.12; letter-spacing: -.04em; }
+      .icon-button {
+        display: grid; width: 40px; height: 40px; place-items: center;
+        border: 0; border-radius: 50%; background: transparent; color: inherit;
+      }
+      .icon-button svg, .tab svg, .list-icon svg { width: 22px; height: 22px; stroke-width: 1.8; }
+      .pay-card { margin-top: 30px; padding: 20px; border-radius: 20px; }
+      .pay-top, .section-row, .row-meta, .weather-data { display: flex; align-items: center; justify-content: space-between; }
+      .pay-label { font-size: 14px; font-weight: 620; }
+      .pay-date { color: var(--muted); font-size: 13px; }
+      .count { display: flex; align-items: baseline; gap: 6px; margin: 12px 0 14px; }
+      .count strong { font-size: 52px; letter-spacing: -.06em; line-height: 1; }
+      .count span { font-size: 17px; font-weight: 620; }
+      .track { height: 7px; overflow: hidden; border-radius: 20px; background: rgba(120, 120, 128, .16); }
+      .track b { display: block; width: 68%; height: 100%; border-radius: inherit; }
+      .section { margin-top: 30px; }
+      .section-row h2 { margin: 0; font-size: 18px; letter-spacing: -.02em; }
+      .section-row a { color: inherit; font-size: 14px; text-decoration: none; }
+      .list { margin-top: 12px; }
+      .row { display: flex; align-items: center; gap: 13px; min-height: 70px; }
+      .list-icon { display: grid; width: 38px; height: 38px; place-items: center; flex: 0 0 auto; border-radius: 12px; }
+      .row-copy { min-width: 0; flex: 1; }
+      .row-copy strong { display: block; font-size: 16px; letter-spacing: -.01em; }
+      .row-copy span { display: block; margin-top: 4px; color: var(--muted); font-size: 13px; }
+      .due { font-size: 13px; font-weight: 620; white-space: nowrap; }
+      .weather { margin-top: 24px; padding-top: 20px; }
+      .weather-data { margin-top: 16px; }
+      .weather-temp { font-size: 38px; font-weight: 680; letter-spacing: -.06em; }
+      .weather-copy strong { display: block; font-size: 16px; }
+      .weather-copy span { display: block; margin-top: 4px; font-size: 13px; }
+      .tabbar {
+        position: absolute; right: 0; bottom: 0; left: 0; display: flex; align-items: center; justify-content: space-around;
+        height: 84px; padding: 8px 12px 20px; backdrop-filter: blur(20px);
+      }
+      .tab { display: grid; width: 64px; place-items: center; gap: 4px; color: inherit; font-size: 11px; text-decoration: none; }
+      .tab svg { width: 21px; height: 21px; }
+      .tab[aria-current="page"] { font-weight: 690; }
+
+      /* 01 · iOS native light */
+      .native { background: #f8f8fa; }
+      .native .pay-card { background: #eaf3ff; color: #102b4c; }
+      .native .track b { background: #0a84ff; }
+      .native .list { border-top: 1px solid var(--line); }
+      .native .row { border-bottom: 1px solid var(--line); }
+      .native .list-icon { color: #0a84ff; background: #eaf3ff; }
+      .native .due { color: #0a84ff; }
+      .native .weather { border-top: 1px solid var(--line); }
+      .native .weather-data svg { color: #0a84ff; }
+      .native .tabbar { background: rgba(250, 250, 252, .86); border-top: 1px solid rgba(60, 60, 67, .16); }
+      .native .tab[aria-current="page"] { color: #0a84ff; }
+
+      /* 02 · quiet editorial */
+      .editorial { background: #fffdf9; color: #24221f; }
+      .editorial .screen { padding-right: 24px; padding-left: 24px; }
+      .editorial .topbar { padding-bottom: 22px; border-bottom: 1px solid #dcd7ce; }
+      .editorial .eyebrow { color: #746f67; letter-spacing: .04em; }
+      .editorial h1 { font-family: ui-serif, Georgia, "Songti SC", serif; font-size: 36px; letter-spacing: -.06em; }
+      .editorial .pay-card { padding: 22px 0; border-radius: 0; border-bottom: 1px solid #dcd7ce; background: transparent; }
+      .editorial .pay-label { color: #2f61d5; }
+      .editorial .count strong { font-family: ui-serif, Georgia, "Songti SC", serif; font-size: 58px; }
+      .editorial .track { height: 2px; border-radius: 0; background: #e3dfd7; }
+      .editorial .track b { background: #2f61d5; }
+      .editorial .section { margin-top: 25px; }
+      .editorial .list { margin-top: 8px; border-top: 1px solid #dcd7ce; }
+      .editorial .row { border-bottom: 1px solid #dcd7ce; }
+      .editorial .list-icon { width: 28px; height: 28px; border-radius: 0; color: #2f61d5; background: transparent; }
+      .editorial .due { color: #2f61d5; }
+      .editorial .weather { border-top: 1px solid #dcd7ce; }
+      .editorial .weather-data svg { color: #2f61d5; }
+      .editorial .tabbar { background: rgba(255, 253, 249, .92); border-top: 1px solid #dcd7ce; }
+      .editorial .tab[aria-current="page"] { color: #2f61d5; }
+
+      /* 03 · calm slate */
+      .slate { background: #f5f7f8; color: #18202b; }
+      .slate .topbar { padding: 14px; border-radius: 18px; background: #ffffff; }
+      .slate .pay-card { color: #fff; background: #26394f; }
+      .slate .pay-date { color: #b9c5d2; }
+      .slate .track { background: rgba(255,255,255,.18); }
+      .slate .track b { background: #8ad0c7; }
+      .slate .section { margin-top: 22px; padding: 18px; border-radius: 18px; background: #fff; }
+      .slate .list { margin-top: 8px; }
+      .slate .row + .row { border-top: 1px solid #edf0f2; }
+      .slate .list-icon { color: #3b716f; background: #e8f4f1; }
+      .slate .due { color: #3b716f; }
+      .slate .weather { margin-top: 16px; padding: 18px; border-radius: 18px; background: #dfeef0; }
+      .slate .weather-data svg { color: #3b716f; }
+      .slate .tabbar { background: rgba(255,255,255,.88); border-top: 1px solid #e2e8ec; }
+      .slate .tab[aria-current="page"] { color: #3b716f; }
+
+      @media (max-width: 1180px) { .gallery { grid-template-columns: minmax(320px, 390px); } }
+    </style>
+  </head>
+  <body>
+    <main class="gallery" aria-label="薪日首页方向探索">
+      <figure class="direction">
+        <figcaption>01 · 原生清透 <span>像现在好用的 iOS 工具，不抢内容</span></figcaption>
+        <section class="phone native" aria-label="原生清透首页">
+          <div class="screen">
+            <header class="topbar"><div><p class="eyebrow">今天 · 7月17日 周五</p><h1>早上好</h1></div><button class="icon-button" aria-label="新增事项">＋</button></header>
+            <section class="pay-card"><div class="pay-top"><span class="pay-label">下次发薪</span><span class="pay-date">7月25日</span></div><div class="count"><strong>8</strong><span>天后到账</span></div><div class="track"><b></b></div></section>
+            <section class="section"><div class="section-row"><h2>近期提醒</h2><a href="#">全部</a></div><div class="list"><div class="row"><div class="list-icon"><svg><use href="#drop" /></svg></div><div class="row-copy"><strong>缴纳水费</strong><span>7月20日 · 周一</span></div><span class="due">3天后</span></div><div class="row"><div class="list-icon"><svg><use href="#card" /></svg></div><div class="row-copy"><strong>信用卡还款</strong><span>7月25日 · 周六</span></div><span class="due">8天后</span></div></div></section>
+            <section class="weather"><div class="section-row"><h2>天气</h2><a href="#">上海</a></div><div class="weather-data"><div class="weather-copy"><strong>晴朗</strong><span>空气良好 · 适合出行</span></div><span class="weather-temp">26°</span><svg width="34" height="34"><use href="#sun" /></svg></div></section>
+          </div><nav class="tabbar" aria-label="主导航"><a class="tab" aria-current="page" href="#"><svg><use href="#home" /></svg>首页</a><a class="tab" href="#"><svg><use href="#list" /></svg>事项</a><a class="tab" href="#"><svg><use href="#sun" /></svg>天气</a><a class="tab" href="#"><svg><use href="#user" /></svg>我的</a></nav>
+        </section>
+      </figure>
+      <figure class="direction">
+        <figcaption>02 · 安静编辑 <span>更有品位，但不靠插画装饰</span></figcaption>
+        <section class="phone editorial" aria-label="安静编辑首页">
+          <div class="screen">
+            <header class="topbar"><div><p class="eyebrow">今日摘要 · 7月17日</p><h1>薪日</h1></div><button class="icon-button" aria-label="新增事项">＋</button></header>
+            <section class="pay-card"><div class="pay-top"><span class="pay-label">发薪日倒计时</span><span class="pay-date">每月 25 日</span></div><div class="count"><strong>08</strong><span>天</span></div><div class="track"><b></b></div></section>
+            <section class="section"><div class="section-row"><h2>需要处理</h2><a href="#">查看全部</a></div><div class="list"><div class="row"><div class="list-icon"><svg><use href="#drop" /></svg></div><div class="row-copy"><strong>水费缴纳</strong><span>7月20日 · 还剩 3 天</span></div><span class="due">›</span></div><div class="row"><div class="list-icon"><svg><use href="#card" /></svg></div><div class="row-copy"><strong>信用卡还款</strong><span>7月25日 · 还剩 8 天</span></div><span class="due">›</span></div></div></section>
+            <section class="weather"><div class="section-row"><h2>上海 · 晴朗</h2><a href="#">详情</a></div><div class="weather-data"><div class="weather-copy"><strong>26°</strong><span>最高 28° · 最低 23°</span></div><svg width="36" height="36"><use href="#sun" /></svg></div></section>
+          </div><nav class="tabbar" aria-label="主导航"><a class="tab" aria-current="page" href="#"><svg><use href="#home" /></svg>首页</a><a class="tab" href="#"><svg><use href="#list" /></svg>事项</a><a class="tab" href="#"><svg><use href="#sun" /></svg>天气</a><a class="tab" href="#"><svg><use href="#user" /></svg>我的</a></nav>
+        </section>
+      </figure>
+      <figure class="direction">
+        <figcaption>03 · 克制青灰 <span>最适合长期使用的柔和专业感</span></figcaption>
+        <section class="phone slate" aria-label="克制青灰首页">
+          <div class="screen">
+            <header class="topbar"><div><p class="eyebrow">7月17日 · 星期五</p><h1>今天</h1></div><button class="icon-button" aria-label="新增事项">＋</button></header>
+            <section class="pay-card"><div class="pay-top"><span class="pay-label">距离下次发薪</span><span class="pay-date">7月25日</span></div><div class="count"><strong>8</strong><span>天</span></div><div class="track"><b></b></div></section>
+            <section class="section"><div class="section-row"><h2>临近事项</h2><a href="#">2 项</a></div><div class="list"><div class="row"><div class="list-icon"><svg><use href="#drop" /></svg></div><div class="row-copy"><strong>缴纳水费</strong><span>周一 · 上午 10:00</span></div><span class="due">3天后</span></div><div class="row"><div class="list-icon"><svg><use href="#card" /></svg></div><div class="row-copy"><strong>信用卡还款</strong><span>周六 · 全天</span></div><span class="due">8天后</span></div></div></section>
+            <section class="weather"><div class="section-row"><h2>天气</h2><a href="#">上海</a></div><div class="weather-data"><div class="weather-copy"><strong>晴朗 26°</strong><span>微风 · 适合出行</span></div><svg width="38" height="38"><use href="#sun" /></svg></div></section>
+          </div><nav class="tabbar" aria-label="主导航"><a class="tab" aria-current="page" href="#"><svg><use href="#home" /></svg>首页</a><a class="tab" href="#"><svg><use href="#list" /></svg>事项</a><a class="tab" href="#"><svg><use href="#sun" /></svg>天气</a><a class="tab" href="#"><svg><use href="#user" /></svg>我的</a></nav>
+        </section>
+      </figure>
+    </main>
+    <svg xmlns="http://www.w3.org/2000/svg" style="display:none"><defs>
+      <symbol id="home" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1V10Z"/></symbol>
+      <symbol id="list" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></symbol>
+      <symbol id="user" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="8" r="4"/><path d="M4 21c.8-4.1 3.5-6 8-6s7.2 1.9 8 6"/></symbol>
+      <symbol id="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+      <symbol id="drop" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 3s-6 6.1-6 10a6 6 0 0 0 12 0c0-3.9-6-10-6-10Z"/></symbol>
+      <symbol id="card" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h3"/></symbol>
+    </defs></svg>
+  </body>
+</html>

@@ -336,6 +336,14 @@ function setActiveView(refs, nextView, { scroll = true } = {}) {
   activeView = nextView;
   syncViewState(refs);
 
+  const activeHeading = refs.views
+    .find((view) => view.dataset.view === activeView)
+    ?.querySelector("h1");
+  if (activeHeading instanceof HTMLElement) {
+    activeHeading.tabIndex = -1;
+    window.requestAnimationFrame(() => activeHeading.focus({ preventScroll: true }));
+  }
+
   if (scroll) {
     window.scrollTo({
       top: 0,
@@ -354,7 +362,11 @@ function syncViewState(refs) {
   refs.tabButtons.forEach((button) => {
     const isActive = button.dataset.switchView === activeView;
     button.classList.toggle("is-active", isActive);
-    button.setAttribute("aria-selected", String(isActive));
+    if (isActive) {
+      button.setAttribute("aria-current", "page");
+    } else {
+      button.removeAttribute("aria-current");
+    }
   });
 }
 
