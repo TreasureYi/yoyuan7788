@@ -8,7 +8,7 @@ export function createShell() {
       <header class="app-header">
         <div class="brand-lockup">
           <button class="brand" data-switch-view="overview" type="button" aria-label="返回星期首页">
-            <span class="brand__mark" aria-hidden="true"><img src="./assets/icons/app-icon-star-192.png?v=20260718.4" alt="" width="38" height="38" /></span>
+            <span class="brand__mark" aria-hidden="true"><img src="./assets/icons/app-icon-star-192.png?v=20260718.5" alt="" width="38" height="38" /></span>
             <span>星期</span>
           </button>
           <p id="todayLabel">--</p>
@@ -100,7 +100,11 @@ export function createShell() {
               <div class="split-grid">
                 <label class="field">
                   <span class="field__label">事项日期</span>
-                  <input id="reminderDateInput" name="date" class="input" type="date" required />
+                  <span class="date-input-shell">
+                    <span id="reminderDateDisplay" class="date-input-shell__value" data-empty="true">选择日期</span>
+                    <span class="date-input-shell__icon" aria-hidden="true">${iconCalendar()}</span>
+                    <input id="reminderDateInput" name="date" class="date-input-shell__native" type="date" aria-label="事项日期" required />
+                  </span>
                 </label>
                 <label class="field">
                   <span class="field__label">分类</span>

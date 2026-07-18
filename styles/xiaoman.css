@@ -700,19 +700,6 @@ body {
   min-width: 0;
 }
 
-input[type="date"].input {
-  display: block;
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-  overflow: hidden;
-}
-
-input[type="date"]::-webkit-date-and-time-value {
-  min-width: 0;
-  text-align: left;
-}
-
 .input:focus,
 .select:focus,
 .textarea:focus {

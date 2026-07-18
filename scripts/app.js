@@ -32,6 +32,7 @@ import {
   syncCloudBackup
 } from "./services/sync.js";
 import { fetchWeatherReportByCoordinates } from "./services/weather.js";
+import { formatDateLong } from "./utils/date.js";
 import {
   createRefs,
   populateSalaryOptions,
@@ -72,6 +73,10 @@ function boot() {
 
 function bindEvents(refs) {
   const root = document.querySelector("#app");
+
+  syncReminderDateDisplay(refs);
+  refs.reminderDateInput.addEventListener("input", () => syncReminderDateDisplay(refs));
+  refs.reminderDateInput.addEventListener("change", () => syncReminderDateDisplay(refs));
 
   root?.addEventListener("click", (event) => {
     const themeButton = event.target instanceof Element ? event.target.closest("[data-theme-option]") : null;
@@ -196,6 +201,7 @@ function bindEvents(refs) {
     });
 
     refs.reminderForm.reset();
+    syncReminderDateDisplay(refs);
     refs.reminderCategoryInput.value = "账单";
     refs.reminderLeadDaysInput.value = "0";
     refs.reminderHourSelect.value = "9";
@@ -304,6 +310,12 @@ function bindEvents(refs) {
       exportSingleReminder(reminder);
     }
   });
+}
+
+function syncReminderDateDisplay(refs) {
+  const value = refs.reminderDateInput.value;
+  refs.reminderDateDisplay.textContent = value ? formatDateLong(value) : "选择日期";
+  refs.reminderDateDisplay.dataset.empty = String(!value);
 }
 
 function renderAll(refs) {
