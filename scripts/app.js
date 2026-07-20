@@ -708,9 +708,9 @@ async function fetchWeatherFromCurrentPosition() {
 
   const position = await new Promise((resolve, reject) => {
     navigator.geolocation.getCurrentPosition(resolve, reject, {
-      enableHighAccuracy: false,
-      timeout: 10000,
-      maximumAge: 10 * 60 * 1000
+      enableHighAccuracy: true,
+      timeout: 15000,
+      maximumAge: 60 * 1000
     });
   }).catch((error) => {
     if (error?.code === 1) {

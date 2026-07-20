@@ -252,6 +252,17 @@ export function renderOverviewWeather(state, refs) {
 
 function renderWeatherSlot(state, slot) {
   const isOverviewCard = Boolean(slot.closest(".xm-weather-card"));
+  const renderDetailState = (title, detail, { action = false, loading = false } = {}) => {
+    const tag = action ? "button" : "div";
+    const attributes = action ? 'data-refresh-weather type="button"' : 'role="status"';
+    slot.innerHTML = `
+      <${tag} class="weather-detail-state${loading ? " is-loading" : ""}" ${attributes}>
+        <span class="weather-detail-state__icon${loading ? " weather-widget__icon--loading" : ""}" aria-hidden="true">${getWeatherIconSvg(null)}</span>
+        <strong>${escapeHtml(title)}</strong>
+        <span>${escapeHtml(detail)}</span>
+      </${tag}>
+    `;
+  };
 
   if (state.weather.status === "loading") {
     if (isOverviewCard) {
@@ -263,12 +274,7 @@ function renderWeatherSlot(state, slot) {
       `;
       return;
     }
-    slot.innerHTML = `
-      <div class="weather-peek__content">
-        <span class="weather-peek__icon weather-widget__icon--loading" aria-hidden="true">${getWeatherIconSvg(null)}</span>
-        <span>定位中</span>
-      </div>
-    `;
+    renderDetailState("正在获取实况", "重新定位并同步最新天气…", { loading: true });
     return;
   }
 
@@ -282,12 +288,7 @@ function renderWeatherSlot(state, slot) {
       `;
       return;
     }
-    slot.innerHTML = `
-      <button class="weather-peek__content" data-refresh-weather type="button">
-        <span class="weather-peek__icon" aria-hidden="true">${getWeatherIconSvg(null)}</span>
-        <span>重试</span>
-      </button>
-    `;
+    renderDetailState("天气暂不可用", state.weather.error || "请检查定位和网络后重试。", { action: true });
     return;
   }
 
@@ -301,12 +302,7 @@ function renderWeatherSlot(state, slot) {
       `;
       return;
     }
-    slot.innerHTML = `
-      <button class="weather-peek__content" data-refresh-weather type="button">
-        <span class="weather-peek__icon" aria-hidden="true">${getWeatherIconSvg(null)}</span>
-        <span>定位</span>
-      </button>
-    `;
+    renderDetailState("查看当前位置天气", "轻点后允许定位，即可获得实况和出行建议。", { action: true });
     return;
   }
 
@@ -320,29 +316,186 @@ function renderWeatherSlot(state, slot) {
     );
     slot.innerHTML = `
       <button class="xm-weather-card__content" data-refresh-weather type="button" aria-label="刷新${escapeHtml(city)}天气">
-        <span class="xm-weather-card__icon" aria-hidden="true">${getWeatherIconSvg(payload.weatherCode)}</span>
+        <span class="xm-weather-card__icon" aria-hidden="true">${getWeatherIconSvg(payload.weatherCode, payload.isDay)}</span>
         <span class="xm-weather-card__copy">
           <strong>${escapeHtml(condition)} ${formatTemperature(payload.temperature)}</strong>
-          <small>轻点刷新 · 适合提前安排</small>
+          <small>${escapeHtml(getOverviewWeatherHint(payload))}</small>
         </span>
       </button>
     `;
     return;
   }
+  renderWeatherDetail(state, slot, payload);
+}
+
+function renderWeatherDetail(state, slot, payload) {
+  const condition = WEATHER_CODES[payload.weatherCode] || "天气更新";
+  const city = payload.city || "当前位置";
+  const today = payload.dailyForecast?.[0] || {};
+  const advice = Array.isArray(payload.advice) ? payload.advice : [];
+  const forecast = Array.isArray(payload.dailyForecast) ? payload.dailyForecast : [];
+  const rainProbability = payload.rainProbability ?? today.rainProbability;
+  const wind = [formatMetric(payload.windSpeed, "km/h"), formatWindDirection(payload.windDirection)]
+    .filter((value) => value !== "—")
+    .join(" ") || "—";
+  const updateText = formatWeatherUpdateTime(payload.observedAt || state.weather.updatedAt);
+  const refreshLabel = `重新定位并刷新${city}天气，当前${condition}${formatTemperature(payload.temperature)}`;
+
   slot.innerHTML = `
-    <button class="weather-peek__content" data-refresh-weather type="button" aria-label="刷新当前位置天气">
-      <span class="weather-peek__icon" aria-hidden="true">${getWeatherIconSvg(payload.weatherCode)}</span>
-      <strong>${formatTemperature(payload.temperature)}</strong>
-      <span>${escapeHtml(payload.city || "当前位置")}</span>
-    </button>
+    <div class="weather-detail">
+      <section class="weather-hero" aria-labelledby="weatherCondition">
+        <div class="weather-hero__topline">
+          <span class="weather-hero__location">${getLocationIconSvg()}${escapeHtml(city)}</span>
+          <span class="weather-hero__live">实况</span>
+        </div>
+        <div class="weather-hero__main">
+          <span class="weather-hero__icon" aria-hidden="true">${getWeatherIconSvg(payload.weatherCode, payload.isDay)}</span>
+          <div>
+            <p id="weatherCondition" class="weather-hero__condition">${escapeHtml(condition)}</p>
+            <strong class="weather-hero__temp">${formatTemperature(payload.temperature)}</strong>
+            <p class="weather-hero__feels">体感 ${formatTemperature(payload.apparentTemperature)}</p>
+          </div>
+        </div>
+        <div class="weather-hero__footer">
+          <span>今日 ${formatTemperature(today.high)} / ${formatTemperature(today.low)}</span>
+          <button class="weather-refresh-control" data-refresh-weather type="button" aria-label="${escapeHtml(refreshLabel)}">
+            ${getRefreshIconSvg()}<span>${escapeHtml(updateText)}</span>
+          </button>
+        </div>
+      </section>
+
+      <section class="weather-section" aria-labelledby="weatherAdviceTitle">
+        <div class="weather-section__heading">
+          <div><span>出门前</span><h2 id="weatherAdviceTitle">生活建议</h2></div>
+          <span class="weather-section__badge">${advice.length || 1} 条</span>
+        </div>
+        <div class="weather-advice-list">
+          ${(advice.length ? advice : [{ kind: "outing", title: "天气已更新", detail: "出门前可再轻点刷新一次。" }])
+            .map((item) => `
+              <article class="weather-advice">
+                <span class="weather-advice__icon weather-advice__icon--${escapeHtml(item.kind)}" aria-hidden="true">${getAdviceIconSvg(item.kind)}</span>
+                <div><h3>${escapeHtml(item.title)}</h3><p>${escapeHtml(item.detail)}</p></div>
+              </article>
+            `).join("")}
+        </div>
+      </section>
+
+      <section class="weather-section" aria-labelledby="weatherMetricsTitle">
+        <div class="weather-section__heading"><div><span>现在</span><h2 id="weatherMetricsTitle">天气详情</h2></div></div>
+        <div class="weather-detail__metrics">
+          ${renderWeatherMetric("降水概率", formatMetric(rainProbability, "%"), "umbrella")}
+          ${renderWeatherMetric("相对湿度", formatMetric(payload.humidity, "%"), "humidity")}
+          ${renderWeatherMetric("风速风向", wind, "wind")}
+          ${renderWeatherMetric("紫外线", formatUvIndex(today.uvIndex), "sun")}
+        </div>
+      </section>
+
+      ${forecast.length ? `
+        <section class="weather-section" aria-labelledby="weatherForecastTitle">
+          <div class="weather-section__heading"><div><span>接下来</span><h2 id="weatherForecastTitle">未来四天</h2></div></div>
+          <div class="weather-forecast-list" role="list">
+            ${forecast.map((day, index) => renderForecastDay(day, index)).join("")}
+          </div>
+        </section>
+      ` : ""}
+
+      <p class="weather-source">${escapeHtml(payload.source || "天气服务")} · ${escapeHtml(updateText)} · 轻点时间可重新定位</p>
+    </div>
   `;
+}
+
+function renderWeatherMetric(label, value, icon) {
+  return `
+    <article class="weather-detail-metric">
+      <span class="weather-detail-metric__icon" aria-hidden="true">${getAdviceIconSvg(icon)}</span>
+      <div><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>
+    </article>
+  `;
+}
+
+function renderForecastDay(day, index) {
+  const condition = WEATHER_CODES[day.weatherCode] || "天气变化";
+  return `
+    <article class="weather-forecast-day" role="listitem">
+      <div class="weather-forecast-day__date"><strong>${escapeHtml(formatForecastDay(day.date, index))}</strong><span>${escapeHtml(condition)}</span></div>
+      <span class="weather-forecast-day__icon" aria-hidden="true">${getWeatherIconSvg(day.weatherCode, true)}</span>
+      <span class="weather-forecast-day__rain">${getAdviceIconSvg("umbrella")}${formatMetric(day.rainProbability, "%")}</span>
+      <span class="weather-forecast-day__temp"><strong>${formatTemperature(day.high)}</strong><span>${formatTemperature(day.low)}</span></span>
+    </article>
+  `;
+}
+
+function getOverviewWeatherHint(payload) {
+  const advice = payload.advice?.[1] || payload.advice?.[0];
+  return advice?.title ? `${advice.title} · 轻点刷新` : "实况天气 · 轻点刷新";
+}
+
+function formatMetric(value, suffix) {
+  if (value === null || value === undefined || value === "") return "—";
+  const number = Number(value);
+  return Number.isFinite(number) ? `${Math.round(number)}${suffix}` : "—";
+}
+
+function formatUvIndex(value) {
+  if (value === null || value === undefined || value === "") return "—";
+  const number = Number(value);
+  if (!Number.isFinite(number)) return "—";
+  if (number >= 8) return `${Math.round(number)} · 很强`;
+  if (number >= 6) return `${Math.round(number)} · 较强`;
+  if (number >= 3) return `${Math.round(number)} · 中等`;
+  return `${Math.round(number)} · 较弱`;
+}
+
+function formatWindDirection(degrees) {
+  if (degrees === null || degrees === undefined || degrees === "") return "—";
+  const number = Number(degrees);
+  if (!Number.isFinite(number)) return "—";
+  const directions = ["北风", "东北风", "东风", "东南风", "南风", "西南风", "西风", "西北风"];
+  return directions[Math.round(number / 45) % directions.length];
+}
+
+function formatWeatherUpdateTime(value) {
+  if (!value) return "刚刚更新";
+  const normalized = String(value).includes("T") ? String(value) : String(value).replace(" ", "T");
+  const date = new Date(normalized);
+  if (Number.isNaN(date.getTime())) return "刚刚更新";
+  return `${new Intl.DateTimeFormat("zh-CN", { hour: "2-digit", minute: "2-digit", hour12: false }).format(date)} 更新`;
+}
+
+function formatForecastDay(value, index) {
+  if (index === 0) return "今天";
+  if (index === 1) return "明天";
+  const date = new Date(`${value}T12:00:00`);
+  if (Number.isNaN(date.getTime())) return value || "未来";
+  return new Intl.DateTimeFormat("zh-CN", { weekday: "short" }).format(date);
 }
 
 function createLocationIcon() {
   const wrapper = document.createElement("span");
   wrapper.setAttribute("aria-hidden", "true");
-  wrapper.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>`;
+  wrapper.innerHTML = getLocationIconSvg();
   return wrapper;
+}
+
+function getLocationIconSvg() {
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>`;
+}
+
+function getRefreshIconSvg() {
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.34 5.66"/><path d="M20 4v7h-7"/></svg>`;
+}
+
+function getAdviceIconSvg(kind) {
+  const icons = {
+    clothing: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4 4 6l-2 5 4 2v8h12v-8l4-2-2-5-4-2a4 4 0 0 1-8 0Z"/></svg>`,
+    umbrella: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13a9 9 0 0 1 18 0H3Z"/><path d="M12 4v15a2 2 0 0 0 4 0"/></svg>`,
+    warning: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 10 18H2L12 3Z"/><path d="M12 9v5M12 18h.01"/></svg>`,
+    sun: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>`,
+    wind: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 8h11a3 3 0 1 0-3-3M3 12h16a3 3 0 1 1-3 3M3 16h8"/></svg>`,
+    humidity: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2s7 7 7 12a7 7 0 0 1-14 0c0-5 7-12 7-12Z"/><path d="M9 16c.7 1.3 1.8 2 3.2 2"/></svg>`,
+    outing: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19c4-7 8-10 16-14"/><path d="m13 5 7-1-1 7M5 15l4 4M9 10l5 5"/></svg>`
+  };
+  return icons[kind] || icons.outing;
 }
 
 export function renderReminderBoard(state, refs) {
@@ -436,9 +589,13 @@ function applyFilter(reminders, filter) {
   return reminders;
 }
 
-function getWeatherIconSvg(code) {
+function getWeatherIconSvg(code, isDay = true) {
   if (code === null || code === undefined) {
     return `<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M14 32a8 8 0 1 1 0-16 7 7 0 0 1 13.5 2.5A6 6 0 1 1 34 32H14z"/></svg>`;
+  }
+
+  if ((code === 0 || code === 1) && !isDay) {
+    return `<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M34 31.5A15 15 0 0 1 16.5 14 13 13 0 1 0 34 31.5Z"/><path d="M34 11v4M32 13h4"/></svg>`;
   }
 
   if (code === 0 || code === 1) {
@@ -457,7 +614,7 @@ function getWeatherIconSvg(code) {
     return `<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M14 28a8 8 0 1 1 0-16 7 7 0 0 1 13.5 2.5A6 6 0 1 1 34 28H14z"/><path d="M22 32v10M30 32v10M18 36h16"/></svg>`;
   }
 
-  if (code <= 77) {
+  if (code <= 77 || (code >= 85 && code <= 86)) {
     return `<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M14 28a8 8 0 1 1 0-16 7 7 0 0 1 13.5 2.5A6 6 0 1 1 34 28H14z"/><circle cx="20" cy="36" r="1.5" fill="currentColor"/><circle cx="28" cy="40" r="1.5" fill="currentColor"/><circle cx="36" cy="36" r="1.5" fill="currentColor"/></svg>`;
   }
 

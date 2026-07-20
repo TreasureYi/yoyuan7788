@@ -96,11 +96,46 @@ html[data-theme="twinkle"] .xm-weather-card {
     linear-gradient(135deg, #f7ecc7, #ece2f8);
 }
 
+html[data-theme="twinkle"] .weather-page-card {
+  --weather-hero-start: #68458f;
+  --weather-hero-end: #40275e;
+  --weather-hero-highlight: #ffd45b;
+}
+
 html[data-theme="jay"] .xm-weather-card {
   border-color: rgba(240, 150, 173, 0.12);
   background:
     radial-gradient(circle at 15% 80%, rgba(224, 102, 136, 0.12), transparent 34%),
     linear-gradient(135deg, #282430, #22232d);
+}
+
+html[data-theme="jay"] .weather-page-card {
+  --weather-hero-start: #342331;
+  --weather-hero-end: #181922;
+  --weather-hero-highlight: #f2b84a;
+}
+
+html[data-theme="jay"] .weather-hero,
+html[data-theme="jay"] .weather-section,
+html[data-theme="jay"] .weather-detail-state {
+  border-color: rgba(255, 245, 241, 0.13);
+}
+
+html[data-theme="jay"] .weather-section,
+html[data-theme="jay"] .weather-detail-state {
+  background: #23242f;
+}
+
+html[data-theme="jay"] .weather-advice,
+html[data-theme="jay"] .weather-detail-metric {
+  border-color: rgba(255, 245, 241, 0.11);
+  background: #1c1d27;
+}
+
+html[data-theme="jay"] .weather-advice p,
+html[data-theme="jay"] .weather-source,
+html[data-theme="jay"] .weather-page-card > .weather-privacy {
+  color: #b9b1b5;
 }
 
 .appearance-card {

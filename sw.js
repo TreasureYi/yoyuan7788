@@ -1,4 +1,4 @@
-const APP_VERSION = "20260718.5";
+const APP_VERSION = "20260720.1";
 const CACHE_NAME = `yoyuan-ledger-${APP_VERSION}`;
 const STATIC_ASSETS = [
   "./",

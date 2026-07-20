@@ -8,7 +8,7 @@ export function createShell() {
       <header class="app-header">
         <div class="brand-lockup">
           <button class="brand" data-switch-view="overview" type="button" aria-label="返回星期首页">
-            <span class="brand__mark" aria-hidden="true"><img src="./assets/icons/app-icon-star-192.png?v=20260718.5" alt="" width="38" height="38" /></span>
+            <span class="brand__mark" aria-hidden="true"><img src="./assets/icons/app-icon-star-192.png?v=20260720.1" alt="" width="38" height="38" /></span>
             <span>星期</span>
           </button>
           <p id="todayLabel">--</p>
@@ -148,12 +148,11 @@ export function createShell() {
           <header class="page-intro">
             <div class="section-kicker"><span>当前位置</span><span class="section-kicker__line"></span></div>
             <h1>天气</h1>
-            <p>轻点卡片即可重新定位并刷新天气。</p>
+            <p>查看实况、降雨概率和生活建议，轻点即可更新。</p>
           </header>
           <article class="journal-card graph-paper weather-page-card">
-            <div class="weather-page-card__orb">${iconWeather()}</div>
             <div class="weather-page-card__slot" data-weather-slot></div>
-            <p>位置仅用于查询天气和城市名，不会保存在应用内。</p>
+            <p class="weather-privacy">位置仅用于查询天气和城市名，不会保存在应用内。</p>
           </article>
         </section>
 

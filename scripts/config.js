@@ -1,7 +1,7 @@
 export const STORAGE_KEY = "yoyuan-ledger:v2";
 export const INSTALLATION_KEY = "yoyuan-ledger:installation-id";
 export const RECOVERY_CODE_KEY = "yoyuan-ledger:recovery-code";
-export const APP_VERSION = "20260718.5";
+export const APP_VERSION = "20260720.1";
 
 export const APP_META = {
   productName: "星期",
@@ -84,14 +84,23 @@ export const WEATHER_CODES = {
   51: "小毛毛雨",
   53: "毛毛雨",
   55: "强毛毛雨",
+  56: "轻微冻雨",
+  57: "强冻雨",
   61: "小雨",
   63: "中雨",
   65: "大雨",
+  66: "轻微冰雨",
+  67: "强冰雨",
   71: "小雪",
   73: "中雪",
   75: "大雪",
+  77: "米雪",
   80: "阵雨",
   81: "较强阵雨",
   82: "强阵雨",
-  95: "雷暴"
+  85: "阵雪",
+  86: "强阵雪",
+  95: "雷暴",
+  96: "雷暴伴冰雹",
+  99: "强雷暴伴冰雹"
 };
