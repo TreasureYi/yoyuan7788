@@ -75,6 +75,7 @@ export function createRefs(root) {
     customThemeImageInput: root.querySelector("#customThemeImageInput"),
     customThemeCreateButton: root.querySelector("#customThemeCreateButton"),
     customThemeGallery: root.querySelector("#customThemeGallery"),
+    customThemeDeleteCurrentButton: root.querySelector("#customThemeDeleteCurrentButton"),
     customThemeState: root.querySelector("#customThemeState"),
     reminderBoardState: root.querySelector("#reminderBoardState")
   };
@@ -104,6 +105,8 @@ export function renderAppearancePanel(state, refs) {
   refs.customThemeGallery.innerHTML = customThemes
     .map((entry) => customThemeLibraryItem(entry, entry.id === state.preferences.activeCustomThemeId))
     .join("");
+  refs.customThemeDeleteCurrentButton.hidden = !activeCustomTheme;
+  refs.customThemeDeleteCurrentButton.disabled = !activeCustomTheme;
   refs.customThemeState.textContent = customImage
     ? `当前使用：${activeCustomTheme.recommendation || "已根据照片配色"}。最多可保存 3 张照片主题，仅保存在当前设备。`
     : "从相册选择一张照片，系统会识别主色和明暗，智能生成外观。最多可保存 3 张。";
@@ -117,7 +120,7 @@ function customThemeLibraryItem(theme, isActive) {
         <span class="custom-theme-library__preview"${preview} aria-hidden="true"></span>
         <span><strong>${escapeHtml(theme.recommendation || "智能照片主题")}</strong><small>${isActive ? "正在使用" : "轻点切换"}</small></span>
       </button>
-      <button class="custom-theme-library__delete" data-custom-theme-action="delete" data-custom-theme-id="${escapeHtml(theme.id)}" type="button" aria-label="删除照片主题 ${escapeHtml(theme.recommendation || "智能照片主题")}">${getThemeDeleteIcon()}</button>
+      <button class="custom-theme-library__delete" data-custom-theme-action="delete" data-custom-theme-id="${escapeHtml(theme.id)}" type="button" aria-label="删除照片主题 ${escapeHtml(theme.recommendation || "智能照片主题")}">${getThemeDeleteIcon()}<span>删除</span></button>
     </article>
   `;
 }

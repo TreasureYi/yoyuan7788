@@ -144,6 +144,13 @@ function bindEvents(refs) {
   });
 
   refs.customThemeCreateButton.addEventListener("click", () => refs.customThemeImageInput.click());
+  refs.customThemeDeleteCurrentButton.addEventListener("click", () => {
+    const activeCustomTheme = getActiveCustomTheme();
+    if (!activeCustomTheme || !window.confirm("删除当前照片主题吗？此操作无法恢复。")) return;
+    deleteCustomTheme(activeCustomTheme.id);
+    renderAll(refs);
+    refs.customThemeState.textContent = "照片主题已删除。";
+  });
   refs.customThemeGallery.addEventListener("click", (event) => {
     const actionButton = event.target instanceof Element ? event.target.closest("[data-custom-theme-action]") : null;
     if (!actionButton) return;

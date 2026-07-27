@@ -8,7 +8,7 @@ export function createShell() {
       <header class="app-header">
         <div class="brand-lockup">
           <button class="brand" data-switch-view="overview" type="button" aria-label="返回星期首页">
-            <span class="brand__mark" aria-hidden="true"><img src="./assets/icons/app-icon-star-192.png?v=20260727.3" alt="" width="38" height="38" /></span>
+            <span class="brand__mark" aria-hidden="true"><img src="./assets/icons/app-icon-star-192.png?v=20260727.4" alt="" width="38" height="38" /></span>
             <span>星期</span>
           </button>
           <p id="todayLabel">--</p>
@@ -179,6 +179,7 @@ export function createShell() {
               <input id="customThemeImageInput" class="sr-only" type="file" accept="image/*" aria-label="从相册选择主题照片" />
               <button id="customThemeCreateButton" class="button button--primary button--block appearance-card__create" type="button">新增照片主题</button>
               <div id="customThemeGallery" class="custom-theme-library" aria-label="照片主题库" hidden></div>
+              <button id="customThemeDeleteCurrentButton" class="button button--danger button--block appearance-card__delete-current" type="button" hidden>删除当前照片主题</button>
               <p id="customThemeState" class="appearance-card__note" aria-live="polite">照片仅保存在当前设备，不会上传或同步到云端。</p>
             </article>
 

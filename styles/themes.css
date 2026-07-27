@@ -362,7 +362,7 @@ html[data-theme="jay"] .weather-page-card > .weather-privacy {
 
 .custom-theme-library__item {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 44px;
+  grid-template-columns: minmax(0, 1fr) 64px;
   gap: 8px;
   padding: 6px;
   border: 1px solid var(--line);
@@ -413,7 +413,11 @@ html[data-theme="jay"] .weather-page-card > .weather-privacy {
 
 .custom-theme-library__delete {
   display: inline-grid;
-  width: 44px;
+  grid-auto-flow: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  width: 64px;
   height: 44px;
   align-self: center;
   place-items: center;
@@ -436,8 +440,17 @@ html[data-theme="jay"] .weather-page-card > .weather-privacy {
 }
 
 .custom-theme-library__delete svg {
-  width: 19px;
-  height: 19px;
+  width: 16px;
+  height: 16px;
+}
+
+.custom-theme-library__delete span {
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.appearance-card__delete-current {
+  margin-top: 10px;
 }
 
 .reminder-board-state {
