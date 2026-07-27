@@ -1,7 +1,7 @@
 export const STORAGE_KEY = "yoyuan-ledger:v2";
 export const INSTALLATION_KEY = "yoyuan-ledger:installation-id";
 export const RECOVERY_CODE_KEY = "yoyuan-ledger:recovery-code";
-export const APP_VERSION = "20260727.1";
+export const APP_VERSION = "20260727.2";
 
 export const APP_META = {
   productName: "星期",
@@ -75,7 +75,9 @@ export const DEFAULT_STATE = {
     theme: DEFAULT_THEME,
     customTheme: {
       imageDataUrl: "",
-      tone: "dark"
+      tone: "dark",
+      palette: {},
+      recommendation: ""
     }
   },
   weather: {

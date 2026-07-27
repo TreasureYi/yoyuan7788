@@ -60,15 +60,12 @@ export function setTheme(theme) {
   persistState();
 }
 
-export function setCustomTheme(imageDataUrl, tone) {
+export function setCustomTheme(customTheme) {
   const previousPreferences = {
     ...state.preferences,
     customTheme: { ...state.preferences.customTheme }
   };
-  state.preferences.customTheme = {
-    imageDataUrl: String(imageDataUrl || ""),
-    tone: tone === "light" ? "light" : "dark"
-  };
+  state.preferences.customTheme = normalizeCustomTheme(customTheme);
   state.preferences.theme = "custom";
   try {
     persistState();
@@ -81,7 +78,9 @@ export function setCustomTheme(imageDataUrl, tone) {
 export function clearCustomTheme() {
   state.preferences.customTheme = {
     imageDataUrl: "",
-    tone: "dark"
+    tone: "dark",
+    palette: {},
+    recommendation: ""
   };
   if (state.preferences.theme === "custom") {
     state.preferences.theme = DEFAULT_THEME;
@@ -238,7 +237,11 @@ function normalizeReminder(entry) {
 function normalizeCustomTheme(theme) {
   return {
     imageDataUrl: String(theme?.imageDataUrl || ""),
-    tone: theme?.tone === "light" ? "light" : "dark"
+    tone: theme?.tone === "light" ? "light" : "dark",
+    palette: Object.fromEntries(
+      Object.entries(theme?.palette || {}).filter(([key, value]) => key.startsWith("--") && typeof value === "string")
+    ),
+    recommendation: String(theme?.recommendation || "").slice(0, 40)
   };
 }
 

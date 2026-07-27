@@ -53,6 +53,11 @@ let activeView = "overview";
 let cloudSyncTimer = null;
 let cloudSyncPaused = false;
 let cloudStatusText = "";
+const CUSTOM_THEME_VARIABLES = [
+  "--bg", "--surface", "--surface-strong", "--surface-muted", "--text", "--text-muted", "--text-soft",
+  "--text-inverse", "--accent", "--accent-strong", "--accent-soft", "--accent-warm", "--accent-warm-soft",
+  "--line", "--line-strong"
+];
 
 boot();
 
@@ -123,14 +128,15 @@ function bindEvents(refs) {
     refs.customThemeState.textContent = "正在处理照片…";
     try {
       const customTheme = await prepareThemeImage(file);
-      setCustomTheme(customTheme.imageDataUrl, customTheme.tone);
+      setCustomTheme(customTheme);
       renderAll(refs);
-      refs.customThemeState.textContent = "照片主题已保存到当前设备。";
+      refs.customThemeState.textContent = `智能推荐：${customTheme.recommendation}，已保存到当前设备。`;
     } catch (error) {
       refs.customThemeState.textContent = error.message || "照片处理失败，请换一张再试";
     }
   });
 
+  refs.customThemeCreateButton.addEventListener("click", () => refs.customThemeImageInput.click());
   refs.customThemeReplaceButton.addEventListener("click", () => refs.customThemeImageInput.click());
   refs.customThemeClearButton.addEventListener("click", () => {
     clearCustomTheme();
@@ -333,9 +339,13 @@ function bindEvents(refs) {
     }
 
     if (action === "delete") {
+      if (!window.confirm(`确定删除“${reminder.title}”吗？此操作无法恢复。`)) {
+        return;
+      }
       deleteReminder(id);
       renderAll(refs);
       await syncExistingPushSubscription(refs);
+      refs.reminderBoardState.textContent = "事项已删除。";
       return;
     }
 
@@ -385,8 +395,15 @@ function applyTheme(theme) {
   root.dataset.customTone = canUseCustomTheme ? customTheme.tone : "";
   if (canUseCustomTheme) {
     root.style.setProperty("--custom-theme-artwork", `url("${customTheme.imageDataUrl}")`);
+    CUSTOM_THEME_VARIABLES.forEach((name) => {
+      const value = customTheme.palette?.[name];
+      if (value) {
+        root.style.setProperty(name, value);
+      }
+    });
   } else {
     root.style.removeProperty("--custom-theme-artwork");
+    CUSTOM_THEME_VARIABLES.forEach((name) => root.style.removeProperty(name));
   }
   const themeColor = canUseCustomTheme
     ? customTheme.tone === "light"

@@ -74,6 +74,7 @@ export function createRefs(root) {
     themeButtons: Array.from(root.querySelectorAll("[data-theme-option]")),
     customThemeImageInput: root.querySelector("#customThemeImageInput"),
     customThemeActions: root.querySelector("#customThemeActions"),
+    customThemeCreateButton: root.querySelector("#customThemeCreateButton"),
     customThemeReplaceButton: root.querySelector("#customThemeReplaceButton"),
     customThemeClearButton: root.querySelector("#customThemeClearButton"),
     customThemeState: root.querySelector("#customThemeState"),
@@ -101,8 +102,8 @@ export function renderAppearancePanel(state, refs) {
   }
   refs.customThemeActions.hidden = !customImage;
   refs.customThemeState.textContent = customImage
-    ? "照片仅保存在当前设备，不会上传或同步到云端。"
-    : "选择照片后会自动压缩并适配文字配色，仅保存在当前设备。";
+    ? `智能推荐：${state.preferences.customTheme.recommendation || "已根据照片配色"}。照片仅保存在当前设备，不会上传或同步到云端。`
+    : "从相册选择一张照片，系统会识别主色和明暗，智能生成外观。";
 }
 
 export function populateSalaryOptions(select, currentDay) {
@@ -570,6 +571,7 @@ export function renderReminderBoard(state, refs) {
       const completionAction = entry.completed
         ? `<button class="reminder-complete-button is-completed" data-action="restore" data-id="${escapeHtml(entry.id)}" type="button" aria-label="恢复事项 ${escapeHtml(entry.title)}">${getRestoreIcon()}</button>`
         : `<button class="reminder-complete-button" data-action="complete" data-id="${escapeHtml(entry.id)}" type="button" aria-label="标记事项 ${escapeHtml(entry.title)} 为已完成">${getCompleteIcon()}</button>`;
+      const deleteAction = `<button class="reminder-delete-button" data-action="delete" data-id="${escapeHtml(entry.id)}" type="button" aria-label="删除事项 ${escapeHtml(entry.title)}">${getDeleteIcon()}</button>`;
 
       return `
         <article class="reminder-item reminder-item--${tone}">
@@ -585,11 +587,10 @@ export function renderReminderBoard(state, refs) {
           </div>
 
           <div class="reminder-item__side">
-            ${completionAction}
+            <div class="reminder-primary-actions">${completionAction}${deleteAction}</div>
             <strong class="countdown">${escapeHtml(entry.completed ? "已完成" : formatCountdown(days))}</strong>
             <div class="reminder-item__actions">
               <button class="button button--link" data-action="export" data-id="${escapeHtml(entry.id)}" type="button">导出</button>
-              <button class="button button--link button--danger" data-action="delete" data-id="${escapeHtml(entry.id)}" type="button">删除</button>
             </div>
           </div>
         </article>
@@ -652,6 +653,10 @@ function getCompleteIcon() {
 
 function getRestoreIcon() {
   return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"/></svg>`;
+}
+
+function getDeleteIcon() {
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>`;
 }
 
 function getWeatherIconSvg(code, isDay = true) {

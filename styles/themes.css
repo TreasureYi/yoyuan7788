@@ -350,6 +350,10 @@ html[data-theme="jay"] .weather-page-card > .weather-privacy {
   margin-top: 12px;
 }
 
+.appearance-card__create {
+  margin-top: 14px;
+}
+
 .reminder-board-state {
   margin: 4px 0 0;
 }
@@ -365,6 +369,38 @@ html[data-theme="jay"] .weather-page-card > .weather-privacy {
   color: var(--accent-strong);
   background: var(--surface);
   transition: color 180ms ease, background-color 180ms ease, transform 180ms ease;
+}
+
+.reminder-primary-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.reminder-delete-button {
+  display: inline-grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid rgba(188, 93, 86, 0.3);
+  border-radius: 50%;
+  color: var(--danger);
+  background: var(--surface);
+  transition: color 180ms ease, background-color 180ms ease, transform 180ms ease;
+}
+
+.reminder-delete-button:active {
+  transform: scale(0.94);
+}
+
+.reminder-delete-button:focus-visible {
+  outline: 3px solid var(--danger);
+  outline-offset: 2px;
+}
+
+.reminder-delete-button svg {
+  width: 19px;
+  height: 19px;
 }
 
 .reminder-complete-button:active {
@@ -393,6 +429,16 @@ html[data-theme="jay"] .weather-page-card > .weather-privacy {
 .reminder-item--completed .countdown {
   color: var(--text-muted);
   background: var(--surface-muted);
+}
+
+@media (max-width: 560px) {
+  .reminder-item__side {
+    min-width: 96px;
+  }
+
+  .reminder-primary-actions {
+    gap: 6px;
+  }
 }
 
 @media (max-width: 430px) {

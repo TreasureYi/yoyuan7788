@@ -8,7 +8,7 @@ export function createShell() {
       <header class="app-header">
         <div class="brand-lockup">
           <button class="brand" data-switch-view="overview" type="button" aria-label="返回星期首页">
-            <span class="brand__mark" aria-hidden="true"><img src="./assets/icons/app-icon-star-192.png?v=20260727.1" alt="" width="38" height="38" /></span>
+            <span class="brand__mark" aria-hidden="true"><img src="./assets/icons/app-icon-star-192.png?v=20260727.2" alt="" width="38" height="38" /></span>
             <span>星期</span>
           </button>
           <p id="todayLabel">--</p>
@@ -177,6 +177,7 @@ export function createShell() {
                 ${Object.entries(APP_THEMES).map(([id, theme]) => themeOption(id, theme)).join("")}
               </div>
               <input id="customThemeImageInput" class="sr-only" type="file" accept="image/*" aria-label="从相册选择主题照片" />
+              <button id="customThemeCreateButton" class="button button--primary button--block appearance-card__create" type="button">从相册智能生成外观</button>
               <div id="customThemeActions" class="appearance-card__actions" hidden>
                 <button id="customThemeReplaceButton" class="button button--secondary button--compact" type="button">更换照片</button>
                 <button id="customThemeClearButton" class="button button--secondary button--compact" type="button">恢复默认外观</button>
@@ -193,6 +194,7 @@ export function createShell() {
                   <label class="field"><span class="field__label">账户</span><input id="salaryAccountInput" name="salaryAccount" class="input" type="text" placeholder="工资卡" autocomplete="off" /></label>
                 </div>
                 <button class="button button--primary button--block" type="submit">保存发薪设置</button>
+                <p class="form-note">设置会立即保存到当前设备；“刷新应用资源”不会删除它。若在 Safari 中清除网站数据，请使用下方云端备份恢复。</p>
               </form>
             </article>
 
@@ -215,7 +217,7 @@ export function createShell() {
               <div class="card-heading">
                 <div>
                   <h2>云端备份与恢复</h2>
-                  <p>工资设置和事项会先在本机加密，再保存到 D1。</p>
+                  <p>工资设置和事项会先在本机加密，再保存到 D1；清除浏览器网站数据后可用恢复码找回。</p>
                 </div>
                 <span id="cloudStatusBadge" class="soft-chip">未开启</span>
               </div>
@@ -242,8 +244,8 @@ export function createShell() {
             <article class="data-note">
               <span class="data-note__icon">${iconDatabase()}</span>
               <div>
-                <h2>安全刷新不会影响通知</h2>
-                <p>联网打开应用时会检查新版本，新代码接管后自动刷新一次。本机数据和通知订阅都不会因更新而清空。</p>
+                <h2>刷新应用资源不会删除设置</h2>
+                <p>这里仅刷新页面代码和图片缓存，不会清除本机数据或通知订阅。Safari 的“清除网站数据”会同时删除本机设置，请先开启云端备份。</p>
                 <div class="maintenance-actions">
                   <button id="clearAppCacheButton" class="button button--secondary" type="button">刷新应用资源</button>
                   <span id="appMaintenanceState" class="form-note">遇到页面异常时使用；不会关闭提醒。</span>
