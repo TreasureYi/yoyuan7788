@@ -73,10 +73,8 @@ export function createRefs(root) {
     themeStatusBadge: root.querySelector("#themeStatusBadge"),
     themeButtons: Array.from(root.querySelectorAll("[data-theme-option]")),
     customThemeImageInput: root.querySelector("#customThemeImageInput"),
-    customThemeActions: root.querySelector("#customThemeActions"),
     customThemeCreateButton: root.querySelector("#customThemeCreateButton"),
-    customThemeReplaceButton: root.querySelector("#customThemeReplaceButton"),
-    customThemeClearButton: root.querySelector("#customThemeClearButton"),
+    customThemeGallery: root.querySelector("#customThemeGallery"),
     customThemeState: root.querySelector("#customThemeState"),
     reminderBoardState: root.querySelector("#reminderBoardState")
   };
@@ -91,7 +89,9 @@ export function renderAppearancePanel(state, refs) {
     button.setAttribute("aria-pressed", String(isActive));
   });
 
-  const customImage = state.preferences.customTheme?.imageDataUrl || "";
+  const customThemes = state.preferences.customThemes || [];
+  const activeCustomTheme = customThemes.find((entry) => entry.id === state.preferences.activeCustomThemeId) || null;
+  const customImage = activeCustomTheme?.imageDataUrl || "";
   const customButton = refs.themeButtons.find((button) => button.dataset.themeOption === "custom");
   if (customButton) {
     customButton.classList.toggle("has-custom-image", Boolean(customImage));
@@ -100,10 +100,30 @@ export function renderAppearancePanel(state, refs) {
       customImage ? `url("${customImage}")` : ""
     );
   }
-  refs.customThemeActions.hidden = !customImage;
+  refs.customThemeGallery.hidden = customThemes.length === 0;
+  refs.customThemeGallery.innerHTML = customThemes
+    .map((entry) => customThemeLibraryItem(entry, entry.id === state.preferences.activeCustomThemeId))
+    .join("");
   refs.customThemeState.textContent = customImage
-    ? `智能推荐：${state.preferences.customTheme.recommendation || "已根据照片配色"}。照片仅保存在当前设备，不会上传或同步到云端。`
-    : "从相册选择一张照片，系统会识别主色和明暗，智能生成外观。";
+    ? `当前使用：${activeCustomTheme.recommendation || "已根据照片配色"}。最多可保存 3 张照片主题，仅保存在当前设备。`
+    : "从相册选择一张照片，系统会识别主色和明暗，智能生成外观。最多可保存 3 张。";
+}
+
+function customThemeLibraryItem(theme, isActive) {
+  const preview = ` style="--custom-theme-preview: url(&quot;${theme.imageDataUrl}&quot;)"`;
+  return `
+    <article class="custom-theme-library__item${isActive ? " is-active" : ""}">
+      <button class="custom-theme-library__select" data-custom-theme-action="select" data-custom-theme-id="${escapeHtml(theme.id)}" type="button" aria-pressed="${String(isActive)}">
+        <span class="custom-theme-library__preview"${preview} aria-hidden="true"></span>
+        <span><strong>${escapeHtml(theme.recommendation || "智能照片主题")}</strong><small>${isActive ? "正在使用" : "轻点切换"}</small></span>
+      </button>
+      <button class="custom-theme-library__delete" data-custom-theme-action="delete" data-custom-theme-id="${escapeHtml(theme.id)}" type="button" aria-label="删除照片主题 ${escapeHtml(theme.recommendation || "智能照片主题")}">${getThemeDeleteIcon()}</button>
+    </article>
+  `;
+}
+
+function getThemeDeleteIcon() {
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>`;
 }
 
 export function populateSalaryOptions(select, currentDay) {

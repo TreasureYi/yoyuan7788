@@ -26,3 +26,30 @@ test("salary settings persist through a fresh app-state load", async () => {
     account: "工资卡"
   });
 });
+
+test("photo themes can be added, selected, and deleted independently", async () => {
+  const storage = new Map();
+  globalThis.localStorage = {
+    getItem: (key) => storage.get(key) || null,
+    setItem: (key, value) => storage.set(key, String(value)),
+    removeItem: (key) => storage.delete(key)
+  };
+  globalThis.window = { dispatchEvent: () => {} };
+  globalThis.CustomEvent = class CustomEvent {
+    constructor(type) {
+      this.type = type;
+    }
+  };
+
+  const state = await import(`../scripts/state.js?gallery=${Date.now()}`);
+  state.addCustomTheme({ imageDataUrl: "data:image/jpeg;base64,one", tone: "light", palette: {}, recommendation: "琥珀暖光" });
+  state.addCustomTheme({ imageDataUrl: "data:image/jpeg;base64,two", tone: "dark", palette: {}, recommendation: "深海蓝调" });
+
+  const [first, second] = state.getState().preferences.customThemes;
+  assert.equal(state.getState().preferences.activeCustomThemeId, second.id);
+  state.selectCustomTheme(first.id);
+  assert.equal(state.getState().preferences.activeCustomThemeId, first.id);
+  state.deleteCustomTheme(first.id);
+  assert.deepEqual(state.getState().preferences.customThemes.map((entry) => entry.id), [second.id]);
+  assert.equal(state.getState().preferences.activeCustomThemeId, second.id);
+});

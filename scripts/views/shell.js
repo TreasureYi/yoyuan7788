@@ -8,7 +8,7 @@ export function createShell() {
       <header class="app-header">
         <div class="brand-lockup">
           <button class="brand" data-switch-view="overview" type="button" aria-label="返回星期首页">
-            <span class="brand__mark" aria-hidden="true"><img src="./assets/icons/app-icon-star-192.png?v=20260727.2" alt="" width="38" height="38" /></span>
+            <span class="brand__mark" aria-hidden="true"><img src="./assets/icons/app-icon-star-192.png?v=20260727.3" alt="" width="38" height="38" /></span>
             <span>星期</span>
           </button>
           <p id="todayLabel">--</p>
@@ -177,11 +177,8 @@ export function createShell() {
                 ${Object.entries(APP_THEMES).map(([id, theme]) => themeOption(id, theme)).join("")}
               </div>
               <input id="customThemeImageInput" class="sr-only" type="file" accept="image/*" aria-label="从相册选择主题照片" />
-              <button id="customThemeCreateButton" class="button button--primary button--block appearance-card__create" type="button">从相册智能生成外观</button>
-              <div id="customThemeActions" class="appearance-card__actions" hidden>
-                <button id="customThemeReplaceButton" class="button button--secondary button--compact" type="button">更换照片</button>
-                <button id="customThemeClearButton" class="button button--secondary button--compact" type="button">恢复默认外观</button>
-              </div>
+              <button id="customThemeCreateButton" class="button button--primary button--block appearance-card__create" type="button">新增照片主题</button>
+              <div id="customThemeGallery" class="custom-theme-library" aria-label="照片主题库" hidden></div>
               <p id="customThemeState" class="appearance-card__note" aria-live="polite">照片仅保存在当前设备，不会上传或同步到云端。</p>
             </article>
 

@@ -1,5 +1,5 @@
-const MAX_IMAGE_EDGE = 1600;
-const MAX_IMAGE_BYTES = 2_400_000;
+const MAX_IMAGE_EDGE = 1280;
+const MAX_IMAGE_BYTES = 900_000;
 
 export async function prepareThemeImage(file) {
   const isImage = file?.type?.startsWith("image/") || /\.(avif|heic|heif|jpe?g|png|webp)$/i.test(file?.name || "");
@@ -22,7 +22,7 @@ export async function prepareThemeImage(file) {
     }
 
     context.drawImage(image, 0, 0, width, height);
-    const imageDataUrl = canvas.toDataURL("image/jpeg", 0.82);
+    const imageDataUrl = canvas.toDataURL("image/jpeg", 0.76);
     if (estimateDataUrlBytes(imageDataUrl) > MAX_IMAGE_BYTES) {
       throw new Error("图片仍然过大，请选择一张更小的照片");
     }

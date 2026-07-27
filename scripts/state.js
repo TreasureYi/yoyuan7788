@@ -60,12 +60,22 @@ export function setTheme(theme) {
   persistState();
 }
 
-export function setCustomTheme(customTheme) {
+export function addCustomTheme(customTheme) {
   const previousPreferences = {
     ...state.preferences,
-    customTheme: { ...state.preferences.customTheme }
+    customThemes: state.preferences.customThemes.map((entry) => ({ ...entry, palette: { ...entry.palette } }))
   };
-  state.preferences.customTheme = normalizeCustomTheme(customTheme);
+  if (state.preferences.customThemes.length >= 3) {
+    throw new Error("最多保存 3 张照片主题，请删除一张后再新增");
+  }
+
+  const nextTheme = {
+    ...normalizeCustomTheme(customTheme),
+    id: crypto.randomUUID(),
+    createdAt: new Date().toISOString()
+  };
+  state.preferences.customThemes = [...state.preferences.customThemes, nextTheme];
+  state.preferences.activeCustomThemeId = nextTheme.id;
   state.preferences.theme = "custom";
   try {
     persistState();
@@ -75,17 +85,32 @@ export function setCustomTheme(customTheme) {
   }
 }
 
-export function clearCustomTheme() {
-  state.preferences.customTheme = {
-    imageDataUrl: "",
-    tone: "dark",
-    palette: {},
-    recommendation: ""
-  };
-  if (state.preferences.theme === "custom") {
-    state.preferences.theme = DEFAULT_THEME;
+export function selectCustomTheme(id) {
+  if (!state.preferences.customThemes.some((entry) => entry.id === id)) {
+    return;
   }
+  state.preferences.activeCustomThemeId = id;
+  state.preferences.theme = "custom";
   persistState();
+}
+
+export function deleteCustomTheme(id) {
+  const previousPreferences = {
+    ...state.preferences,
+    customThemes: state.preferences.customThemes.map((entry) => ({ ...entry, palette: { ...entry.palette } }))
+  };
+  state.preferences.customThemes = state.preferences.customThemes.filter((entry) => entry.id !== id);
+  if (state.preferences.activeCustomThemeId === id) {
+    const fallback = state.preferences.customThemes.at(-1);
+    state.preferences.activeCustomThemeId = fallback?.id || "";
+    state.preferences.theme = fallback ? "custom" : DEFAULT_THEME;
+  }
+  try {
+    persistState();
+  } catch (error) {
+    state.preferences = previousPreferences;
+    throw new Error("保存失败，请稍后重试");
+  }
 }
 
 export function setWeatherPending(city) {
@@ -199,13 +224,7 @@ function normalizeState(raw) {
       }
     },
     reminders: Array.isArray(raw?.reminders) ? raw.reminders.map(normalizeReminder) : [],
-    preferences: {
-      ...base.preferences,
-      ...(raw?.preferences || {}),
-      theme: normalizeTheme(raw?.preferences?.theme),
-      reminderFilter: normalizeReminderFilter(raw?.preferences?.reminderFilter),
-      customTheme: normalizeCustomTheme(raw?.preferences?.customTheme)
-    },
+    preferences: normalizePreferences(raw?.preferences, base.preferences),
     weather: {
       ...base.weather,
       ...(raw?.weather || {})
@@ -243,6 +262,38 @@ function normalizeCustomTheme(theme) {
     ),
     recommendation: String(theme?.recommendation || "").slice(0, 40)
   };
+}
+
+function normalizePreferences(raw, base) {
+  const themes = normalizeCustomThemes(raw);
+  const activeCustomThemeId = themes.some((entry) => entry.id === raw?.activeCustomThemeId)
+    ? String(raw.activeCustomThemeId)
+    : themes.at(-1)?.id || "";
+  const requestedTheme = normalizeTheme(raw?.theme);
+  return {
+    ...base,
+    ...(raw || {}),
+    theme: requestedTheme === "custom" && !activeCustomThemeId ? DEFAULT_THEME : requestedTheme,
+    reminderFilter: normalizeReminderFilter(raw?.reminderFilter),
+    customThemes: themes,
+    activeCustomThemeId
+  };
+}
+
+function normalizeCustomThemes(preferences) {
+  const rawThemes = Array.isArray(preferences?.customThemes)
+    ? preferences.customThemes
+    : preferences?.customTheme?.imageDataUrl
+      ? [{ ...preferences.customTheme, id: "legacy-custom-theme", createdAt: "" }]
+      : [];
+  return rawThemes
+    .map((entry, index) => ({
+      ...normalizeCustomTheme(entry),
+      id: String(entry?.id || `custom-theme-${index}`).slice(0, 80),
+      createdAt: String(entry?.createdAt || "")
+    }))
+    .filter((entry) => entry.imageDataUrl)
+    .slice(-3);
 }
 
 function normalizeReminderFilter(filter) {
