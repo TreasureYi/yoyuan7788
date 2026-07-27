@@ -8,7 +8,7 @@ export function createShell() {
       <header class="app-header">
         <div class="brand-lockup">
           <button class="brand" data-switch-view="overview" type="button" aria-label="返回星期首页">
-            <span class="brand__mark" aria-hidden="true"><img src="./assets/icons/app-icon-star-192.png?v=20260720.1" alt="" width="38" height="38" /></span>
+            <span class="brand__mark" aria-hidden="true"><img src="./assets/icons/app-icon-star-192.png?v=20260727.1" alt="" width="38" height="38" /></span>
             <span>星期</span>
           </button>
           <p id="todayLabel">--</p>
@@ -68,10 +68,11 @@ export function createShell() {
               </div>
               <span id="reminderSummaryValue" class="sr-only">0</span>
               <div class="filters" role="tablist" aria-label="提醒筛选">
-                <button class="filter is-active" data-filter="all" type="button">全部</button>
-                <button class="filter" data-filter="upcoming" type="button">7 天内</button>
+                <button class="filter is-active" data-filter="all" type="button">待处理</button>
                 <button class="filter" data-filter="overdue" type="button">已逾期</button>
+                <button class="filter" data-filter="completed" type="button">已完成</button>
               </div>
+              <p id="reminderBoardState" class="form-note reminder-board-state" aria-live="polite"></p>
               <div id="reminderList" class="reminder-list"></div>
             </article>
 
@@ -175,7 +176,12 @@ export function createShell() {
               <div class="theme-picker" role="group" aria-label="选择应用主题">
                 ${Object.entries(APP_THEMES).map(([id, theme]) => themeOption(id, theme)).join("")}
               </div>
-              <p class="appearance-card__note">主题只改变应用内外观。桌面名称和星星人图标更新后，需要重新添加到主屏幕。</p>
+              <input id="customThemeImageInput" class="sr-only" type="file" accept="image/*" aria-label="从相册选择主题照片" />
+              <div id="customThemeActions" class="appearance-card__actions" hidden>
+                <button id="customThemeReplaceButton" class="button button--secondary button--compact" type="button">更换照片</button>
+                <button id="customThemeClearButton" class="button button--secondary button--compact" type="button">恢复默认外观</button>
+              </div>
+              <p id="customThemeState" class="appearance-card__note" aria-live="polite">照片仅保存在当前设备，不会上传或同步到云端。</p>
             </article>
 
             <article class="journal-card graph-paper form-card">

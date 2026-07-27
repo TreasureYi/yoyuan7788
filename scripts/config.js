@@ -1,7 +1,7 @@
 export const STORAGE_KEY = "yoyuan-ledger:v2";
 export const INSTALLATION_KEY = "yoyuan-ledger:installation-id";
 export const RECOVERY_CODE_KEY = "yoyuan-ledger:recovery-code";
-export const APP_VERSION = "20260720.1";
+export const APP_VERSION = "20260727.1";
 
 export const APP_META = {
   productName: "星期",
@@ -26,10 +26,17 @@ export const APP_THEMES = {
   },
   jay: {
     label: "周杰伦",
-    description: "钢琴、黑胶与舞台夜色",
+    description: "雨夜钢琴与电影光影",
     tag: "音乐",
     themeColor: "#12131a",
     artwork: "/assets/themes/jay-theme.jpg"
+  },
+  custom: {
+    label: "我的照片",
+    description: "从相册挑一张，自动适配配色",
+    tag: "本机",
+    themeColor: "#171717",
+    artwork: ""
   }
 };
 
@@ -40,7 +47,8 @@ export const REMINDER_CATEGORIES = ["账单", "会员", "证件", "合同", "家
 export const REMINDER_FILTERS = {
   all: "all",
   upcoming: "upcoming",
-  overdue: "overdue"
+  overdue: "overdue",
+  completed: "completed"
 };
 
 export const DEFAULT_STATE = {
@@ -64,7 +72,11 @@ export const DEFAULT_STATE = {
   preferences: {
     city: "",
     reminderFilter: REMINDER_FILTERS.all,
-    theme: DEFAULT_THEME
+    theme: DEFAULT_THEME,
+    customTheme: {
+      imageDataUrl: "",
+      tone: "dark"
+    }
   },
   weather: {
     status: "idle",

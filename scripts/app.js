@@ -1,11 +1,14 @@
 import { APP_META, APP_THEMES, DEFAULT_THEME, REMINDER_FILTERS } from "./config.js";
 import {
   addReminder,
+  clearCustomTheme,
   deleteReminder,
   getSyncSnapshot,
   getState,
   replaceSyncedData,
   setReminderFilter,
+  setReminderCompletion,
+  setCustomTheme,
   setTheme,
   setWeatherFailure,
   setWeatherPending,
@@ -31,6 +34,7 @@ import {
   restoreCloudBackup,
   syncCloudBackup
 } from "./services/sync.js";
+import { prepareThemeImage } from "./services/theme.js";
 import { fetchWeatherReportByCoordinates } from "./services/weather.js";
 import { formatDateLong } from "./utils/date.js";
 import {
@@ -82,6 +86,10 @@ function bindEvents(refs) {
     const themeButton = event.target instanceof Element ? event.target.closest("[data-theme-option]") : null;
     if (themeButton) {
       const theme = themeButton.dataset.themeOption;
+      if (theme === "custom") {
+        refs.customThemeImageInput.click();
+        return;
+      }
       setTheme(theme);
       applyTheme(theme);
       renderAll(refs);
@@ -103,6 +111,31 @@ function bindEvents(refs) {
       return;
     }
     setActiveView(refs, nextView);
+  });
+
+  refs.customThemeImageInput.addEventListener("change", async () => {
+    const [file] = refs.customThemeImageInput.files || [];
+    refs.customThemeImageInput.value = "";
+    if (!file) {
+      return;
+    }
+
+    refs.customThemeState.textContent = "正在处理照片…";
+    try {
+      const customTheme = await prepareThemeImage(file);
+      setCustomTheme(customTheme.imageDataUrl, customTheme.tone);
+      renderAll(refs);
+      refs.customThemeState.textContent = "照片主题已保存到当前设备。";
+    } catch (error) {
+      refs.customThemeState.textContent = error.message || "照片处理失败，请换一张再试";
+    }
+  });
+
+  refs.customThemeReplaceButton.addEventListener("click", () => refs.customThemeImageInput.click());
+  refs.customThemeClearButton.addEventListener("click", () => {
+    clearCustomTheme();
+    renderAll(refs);
+    refs.customThemeState.textContent = "已恢复默认外观。";
   });
 
   refs.salaryForm.addEventListener("submit", (event) => {
@@ -283,13 +316,13 @@ function bindEvents(refs) {
   });
 
   refs.reminderList.addEventListener("click", async (event) => {
-    const target = event.target;
-    if (!(target instanceof HTMLElement)) {
+    const actionButton = event.target instanceof Element ? event.target.closest("[data-action]") : null;
+    if (!actionButton) {
       return;
     }
 
-    const action = target.dataset.action;
-    const id = target.dataset.id;
+    const action = actionButton.dataset.action;
+    const id = actionButton.dataset.id;
     if (!action || !id) {
       return;
     }
@@ -303,6 +336,17 @@ function bindEvents(refs) {
       deleteReminder(id);
       renderAll(refs);
       await syncExistingPushSubscription(refs);
+      return;
+    }
+
+    if (action === "complete" || action === "restore") {
+      const completed = action === "complete";
+      setReminderCompletion(id, completed);
+      renderAll(refs);
+      await syncExistingPushSubscription(refs);
+      refs.reminderBoardState.textContent = completed
+        ? "事项已归档到“已完成”，不会再计为逾期或继续推送。"
+        : "事项已恢复到待处理列表。";
       return;
     }
 
@@ -333,8 +377,23 @@ function renderAll(refs) {
 
 function applyTheme(theme) {
   const nextTheme = Object.hasOwn(APP_THEMES, theme) ? theme : DEFAULT_THEME;
-  document.documentElement.dataset.theme = nextTheme;
-  document.querySelector('meta[name="theme-color"]')?.setAttribute("content", APP_THEMES[nextTheme].themeColor);
+  const root = document.documentElement;
+  const customTheme = getState().preferences.customTheme;
+  const canUseCustomTheme = nextTheme === "custom" && customTheme?.imageDataUrl;
+  const appliedTheme = canUseCustomTheme ? "custom" : nextTheme === "custom" ? DEFAULT_THEME : nextTheme;
+  root.dataset.theme = appliedTheme;
+  root.dataset.customTone = canUseCustomTheme ? customTheme.tone : "";
+  if (canUseCustomTheme) {
+    root.style.setProperty("--custom-theme-artwork", `url("${customTheme.imageDataUrl}")`);
+  } else {
+    root.style.removeProperty("--custom-theme-artwork");
+  }
+  const themeColor = canUseCustomTheme
+    ? customTheme.tone === "light"
+      ? "#f8f3ec"
+      : "#17130f"
+    : APP_THEMES[appliedTheme].themeColor;
+  document.querySelector('meta[name="theme-color"]')?.setAttribute("content", themeColor);
 }
 
 async function hydrateDefaultWeather(refs, state) {

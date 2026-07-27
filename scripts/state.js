@@ -1,4 +1,4 @@
-import { APP_THEMES, DEFAULT_STATE, DEFAULT_THEME, STORAGE_KEY } from "./config.js";
+import { APP_THEMES, DEFAULT_STATE, DEFAULT_THEME, REMINDER_FILTERS, STORAGE_KEY } from "./config.js";
 
 const state = loadState();
 
@@ -35,6 +35,21 @@ export function deleteReminder(id) {
   persistState();
 }
 
+export function setReminderCompletion(id, completed) {
+  state.reminders = state.reminders.map((entry) => {
+    if (entry.id !== id) {
+      return entry;
+    }
+
+    return {
+      ...entry,
+      completed: Boolean(completed),
+      completedAt: completed ? new Date().toISOString() : ""
+    };
+  });
+  persistState();
+}
+
 export function setReminderFilter(filter) {
   state.preferences.reminderFilter = filter;
   persistState();
@@ -42,6 +57,35 @@ export function setReminderFilter(filter) {
 
 export function setTheme(theme) {
   state.preferences.theme = normalizeTheme(theme);
+  persistState();
+}
+
+export function setCustomTheme(imageDataUrl, tone) {
+  const previousPreferences = {
+    ...state.preferences,
+    customTheme: { ...state.preferences.customTheme }
+  };
+  state.preferences.customTheme = {
+    imageDataUrl: String(imageDataUrl || ""),
+    tone: tone === "light" ? "light" : "dark"
+  };
+  state.preferences.theme = "custom";
+  try {
+    persistState();
+  } catch (error) {
+    state.preferences = previousPreferences;
+    throw new Error("存储空间不足，请选择一张更小的照片");
+  }
+}
+
+export function clearCustomTheme() {
+  state.preferences.customTheme = {
+    imageDataUrl: "",
+    tone: "dark"
+  };
+  if (state.preferences.theme === "custom") {
+    state.preferences.theme = DEFAULT_THEME;
+  }
   persistState();
 }
 
@@ -159,7 +203,9 @@ function normalizeState(raw) {
     preferences: {
       ...base.preferences,
       ...(raw?.preferences || {}),
-      theme: normalizeTheme(raw?.preferences?.theme)
+      theme: normalizeTheme(raw?.preferences?.theme),
+      reminderFilter: normalizeReminderFilter(raw?.preferences?.reminderFilter),
+      customTheme: normalizeCustomTheme(raw?.preferences?.customTheme)
     },
     weather: {
       ...base.weather,
@@ -183,8 +229,22 @@ function normalizeReminder(entry) {
     hour: clampReminderHour(entry?.hour),
     notificationEnabled: Boolean(entry?.notificationEnabled),
     notes: String(entry?.notes || "").trim(),
-    createdAt: entry?.createdAt || new Date().toISOString()
+    createdAt: entry?.createdAt || new Date().toISOString(),
+    completed: Boolean(entry?.completed),
+    completedAt: entry?.completed ? String(entry?.completedAt || entry?.createdAt || "") : ""
   };
+}
+
+function normalizeCustomTheme(theme) {
+  return {
+    imageDataUrl: String(theme?.imageDataUrl || ""),
+    tone: theme?.tone === "light" ? "light" : "dark"
+  };
+}
+
+function normalizeReminderFilter(filter) {
+  const value = String(filter || REMINDER_FILTERS.all);
+  return Object.values(REMINDER_FILTERS).includes(value) ? value : REMINDER_FILTERS.all;
 }
 
 function clampPayday(day) {

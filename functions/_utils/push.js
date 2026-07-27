@@ -36,7 +36,7 @@ export function normalizeReminderPushRules(payload) {
         reminderDate: normalizeDate(entry?.date),
         leadDays: clampInteger(entry?.leadDays, 0, 30, 0),
         reminderHour: clampInteger(entry?.hour, 0, 23, 9),
-        enabled: Boolean(entry?.notificationEnabled)
+        enabled: Boolean(entry?.notificationEnabled) && !Boolean(entry?.completed)
       }))
       .filter((entry) => entry.reminderId && entry.title && entry.reminderDate && entry.enabled)
   };

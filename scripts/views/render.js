@@ -71,7 +71,13 @@ export function createRefs(root) {
     clearAppCacheButton: root.querySelector("#clearAppCacheButton"),
     appMaintenanceState: root.querySelector("#appMaintenanceState"),
     themeStatusBadge: root.querySelector("#themeStatusBadge"),
-    themeButtons: Array.from(root.querySelectorAll("[data-theme-option]"))
+    themeButtons: Array.from(root.querySelectorAll("[data-theme-option]")),
+    customThemeImageInput: root.querySelector("#customThemeImageInput"),
+    customThemeActions: root.querySelector("#customThemeActions"),
+    customThemeReplaceButton: root.querySelector("#customThemeReplaceButton"),
+    customThemeClearButton: root.querySelector("#customThemeClearButton"),
+    customThemeState: root.querySelector("#customThemeState"),
+    reminderBoardState: root.querySelector("#reminderBoardState")
   };
 }
 
@@ -83,6 +89,20 @@ export function renderAppearancePanel(state, refs) {
     button.classList.toggle("is-active", isActive);
     button.setAttribute("aria-pressed", String(isActive));
   });
+
+  const customImage = state.preferences.customTheme?.imageDataUrl || "";
+  const customButton = refs.themeButtons.find((button) => button.dataset.themeOption === "custom");
+  if (customButton) {
+    customButton.classList.toggle("has-custom-image", Boolean(customImage));
+    customButton.querySelector(".theme-option__preview")?.style.setProperty(
+      "--theme-preview-image",
+      customImage ? `url("${customImage}")` : ""
+    );
+  }
+  refs.customThemeActions.hidden = !customImage;
+  refs.customThemeState.textContent = customImage
+    ? "照片仅保存在当前设备，不会上传或同步到云端。"
+    : "选择照片后会自动压缩并适配文字配色，仅保存在当前设备。";
 }
 
 export function populateSalaryOptions(select, currentDay) {
@@ -112,9 +132,14 @@ export function renderDashboard(state, refs) {
   }
 
   if (refs.reminderSummaryValue && refs.reminderSummaryMeta) {
-    const upcoming = state.reminders.filter((entry) => getDaysUntil(entry.date) >= 0);
-    refs.reminderSummaryValue.textContent = String(upcoming.length);
-    refs.reminderSummaryMeta.textContent = upcoming.length ? "近期需要处理" : "暂时没有待办";
+    const pending = state.reminders.filter((entry) => !entry.completed);
+    const upcoming = pending.filter((entry) => getDaysUntil(entry.date) >= 0);
+    refs.reminderSummaryValue.textContent = String(pending.length);
+    refs.reminderSummaryMeta.textContent = pending.length
+      ? upcoming.length
+        ? "近期需要处理"
+        : "有事项已经逾期"
+      : "暂时没有待办";
   }
 }
 
@@ -508,7 +533,7 @@ export function renderReminderBoard(state, refs) {
     refs.boardPanel.hidden = false;
   }
   if (refs.reminderFilters) {
-    refs.reminderFilters.hidden = sorted.length < 4;
+    refs.reminderFilters.hidden = sorted.length === 0;
   }
 
   refs.filters.forEach((button) => {
@@ -518,7 +543,7 @@ export function renderReminderBoard(state, refs) {
   if (!filtered.length) {
     refs.reminderList.innerHTML = `
       <div class="empty-state empty-state--quiet">
-        <p class="empty-state__title">${sorted.length ? "这里没有事项" : "还没有提醒"}</p>
+        <p class="empty-state__title">${getEmptyReminderTitle(sorted, state.preferences.reminderFilter)}</p>
         <p class="empty-state__hint">${sorted.length ? "换个筛选条件看看。" : "轻点右上角的加号，安排第一件事。"}</p>
       </div>
     `;
@@ -528,17 +553,23 @@ export function renderReminderBoard(state, refs) {
   refs.reminderList.innerHTML = filtered
     .map((entry) => {
       const days = getDaysUntil(entry.date);
-      const tone = getReminderTone(days);
+      const tone = entry.completed ? "completed" : getReminderTone(days);
       const notes = entry.notes || "没有备注";
-      const schedule =
-        days < 0
+      const schedule = entry.completed
+        ? `完成于 ${formatCompletedAt(entry.completedAt)}`
+        : days < 0
           ? `${formatDateWithWeekday(entry.date)} · 已逾期`
           : days === 0
             ? `${formatDateWithWeekday(entry.date)} · 今天`
             : formatDateWithWeekday(entry.date);
-      const notification = entry.notificationEnabled
-        ? `推送 ${entry.leadDays ? `提前 ${entry.leadDays} 天 · ` : ""}${formatHour(entry.hour)}`
-        : "仅记录，不推送";
+      const notification = entry.completed
+        ? "已完成，不再推送"
+        : entry.notificationEnabled
+          ? `推送 ${entry.leadDays ? `提前 ${entry.leadDays} 天 · ` : ""}${formatHour(entry.hour)}`
+          : "仅记录，不推送";
+      const completionAction = entry.completed
+        ? `<button class="reminder-complete-button is-completed" data-action="restore" data-id="${escapeHtml(entry.id)}" type="button" aria-label="恢复事项 ${escapeHtml(entry.title)}">${getRestoreIcon()}</button>`
+        : `<button class="reminder-complete-button" data-action="complete" data-id="${escapeHtml(entry.id)}" type="button" aria-label="标记事项 ${escapeHtml(entry.title)} 为已完成">${getCompleteIcon()}</button>`;
 
       return `
         <article class="reminder-item reminder-item--${tone}">
@@ -554,7 +585,8 @@ export function renderReminderBoard(state, refs) {
           </div>
 
           <div class="reminder-item__side">
-            <strong class="countdown">${escapeHtml(formatCountdown(days))}</strong>
+            ${completionAction}
+            <strong class="countdown">${escapeHtml(entry.completed ? "已完成" : formatCountdown(days))}</strong>
             <div class="reminder-item__actions">
               <button class="button button--link" data-action="export" data-id="${escapeHtml(entry.id)}" type="button">导出</button>
               <button class="button button--link button--danger" data-action="delete" data-id="${escapeHtml(entry.id)}" type="button">删除</button>
@@ -571,22 +603,55 @@ function formatHour(hour) {
 }
 
 function getSortedReminders(reminders) {
-  return [...reminders].sort((left, right) => left.date.localeCompare(right.date));
+  return [...reminders].sort((left, right) => {
+    if (left.completed !== right.completed) {
+      return left.completed ? 1 : -1;
+    }
+    if (left.completed) {
+      return String(right.completedAt || "").localeCompare(String(left.completedAt || ""));
+    }
+    return left.date.localeCompare(right.date);
+  });
 }
 
-function applyFilter(reminders, filter) {
-  if (filter === REMINDER_FILTERS.upcoming) {
-    return reminders.filter((entry) => {
-      const days = getDaysUntil(entry.date);
-      return days >= 0 && days <= 7;
-    });
-  }
-
+export function applyFilter(reminders, filter) {
   if (filter === REMINDER_FILTERS.overdue) {
-    return reminders.filter((entry) => getDaysUntil(entry.date) < 0);
+    return reminders.filter((entry) => !entry.completed && getDaysUntil(entry.date) < 0);
   }
 
-  return reminders;
+  if (filter === REMINDER_FILTERS.completed) {
+    return reminders.filter((entry) => entry.completed);
+  }
+
+  return reminders.filter((entry) => !entry.completed);
+}
+
+function getEmptyReminderTitle(reminders, filter) {
+  if (!reminders.length) return "还没有提醒";
+  if (filter === REMINDER_FILTERS.completed) return "还没有已完成事项";
+  if (filter === REMINDER_FILTERS.overdue) return "没有逾期事项";
+  return "没有待处理事项";
+}
+
+function formatCompletedAt(value) {
+  if (!value) return "刚刚";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "刚刚";
+  return new Intl.DateTimeFormat("zh-CN", {
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false
+  }).format(date);
+}
+
+function getCompleteIcon() {
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>`;
+}
+
+function getRestoreIcon() {
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"/></svg>`;
 }
 
 function getWeatherIconSvg(code, isDay = true) {
