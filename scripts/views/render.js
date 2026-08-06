@@ -49,9 +49,14 @@ export function createRefs(root) {
     reminderNotificationInput: root.querySelector("#reminderNotificationInput"),
     reminderNotesInput: root.querySelector("#reminderNotesInput"),
     reminderSaveState: root.querySelector("#reminderSaveState"),
+    reminderSubmitButton: root.querySelector("#reminderSubmitButton"),
+    reminderFormHeading: root.querySelector("#reminderFormHeading"),
+    reminderFormDescription: root.querySelector("#reminderFormDescription"),
     reminderCount: root.querySelector("#reminderCount"),
+    overviewReminderCount: root.querySelector("#overviewReminderCount"),
+    overviewReminderList: root.querySelector("#overviewReminderList"),
     reminderList: root.querySelector("#reminderList"),
-    boardPanel: root.querySelector("#board"),
+    boardPanel: root.querySelector("#reminderBoard"),
     reminderFilters: root.querySelector(".filters"),
     filters: Array.from(root.querySelectorAll("[data-filter]")),
     overviewWeather: Array.from(root.querySelectorAll("[data-weather-slot]")),
@@ -60,6 +65,7 @@ export function createRefs(root) {
     salaryReminderState: root.querySelector("#salaryReminderState"),
     reminderSummaryValue: root.querySelector("#reminderSummaryValue"),
     reminderSummaryMeta: root.querySelector("#reminderSummaryMeta"),
+    reminderBoardMeta: root.querySelector("#reminderBoardMeta"),
     cloudStatusBadge: root.querySelector("#cloudStatusBadge"),
     cloudCreateButton: root.querySelector("#cloudCreateButton"),
     cloudCopyButton: root.querySelector("#cloudCopyButton"),
@@ -559,6 +565,11 @@ export function renderReminderBoard(state, refs) {
   if (refs.reminderFilters) {
     refs.reminderFilters.hidden = sorted.length === 0;
   }
+  if (refs.reminderBoardMeta) {
+    refs.reminderBoardMeta.textContent = sorted.length
+      ? `共 ${sorted.length} 条，已完成的事项会保留在这里`
+      : "把要做的事都放在这里";
+  }
 
   refs.filters.forEach((button) => {
     button.classList.toggle("is-active", button.dataset.filter === state.preferences.reminderFilter);
@@ -574,52 +585,61 @@ export function renderReminderBoard(state, refs) {
     return;
   }
 
-  refs.reminderList.innerHTML = filtered
-    .map((entry) => {
-      const days = getDaysUntil(entry.date);
-      const tone = entry.completed ? "completed" : getReminderTone(days);
-      const notes = entry.notes || "没有备注";
-      const schedule = entry.completed
-        ? `完成于 ${formatCompletedAt(entry.completedAt)}`
-        : days < 0
-          ? `${formatDateWithWeekday(entry.date)} · 已逾期`
-          : days === 0
-            ? `${formatDateWithWeekday(entry.date)} · 今天`
-            : formatDateWithWeekday(entry.date);
-      const notification = entry.completed
-        ? "已完成，不再推送"
-        : entry.notificationEnabled
-          ? `推送 ${entry.leadDays ? `提前 ${entry.leadDays} 天 · ` : ""}${formatHour(entry.hour)}`
-          : "仅记录，不推送";
-      const completionAction = entry.completed
-        ? `<button class="reminder-complete-button is-completed" data-action="restore" data-id="${escapeHtml(entry.id)}" type="button" aria-label="恢复事项 ${escapeHtml(entry.title)}">${getRestoreIcon()}</button>`
-        : `<button class="reminder-complete-button" data-action="complete" data-id="${escapeHtml(entry.id)}" type="button" aria-label="标记事项 ${escapeHtml(entry.title)} 为已完成">${getCompleteIcon()}</button>`;
-      const deleteAction = `<button class="reminder-delete-button" data-action="delete" data-id="${escapeHtml(entry.id)}" type="button" aria-label="删除事项 ${escapeHtml(entry.title)}">${getDeleteIcon()}</button>`;
+  refs.reminderList.innerHTML = filtered.map((entry) => renderReminderItem(entry)).join("");
+}
 
-      return `
-        <article class="reminder-item reminder-item--${tone}">
-          <div class="reminder-item__icon" aria-hidden="true">${getCategoryIcon(entry.category)}</div>
-          <div class="reminder-item__body">
-            <div class="reminder-item__title-row">
-              <span class="badge">${escapeHtml(entry.category)}</span>
-              <h3 class="reminder-item__title">${escapeHtml(entry.title)}</h3>
-            </div>
-            <p class="reminder-item__meta">${escapeHtml(schedule)}</p>
-            <p class="reminder-item__notification">${escapeHtml(notification)}</p>
-            ${entry.notes ? `<p class="reminder-item__notes">${escapeHtml(notes)}</p>` : ""}
-          </div>
+export function renderOverviewReminderPreview(state, refs) {
+  const pending = getSortedReminders(state.reminders.filter((entry) => !entry.completed));
+  const preview = pending.slice(0, 3);
+  refs.overviewReminderCount.textContent = `${pending.length} 条`;
+  refs.overviewReminderCount.hidden = pending.length === 0;
+  refs.overviewReminderList.innerHTML = preview.length
+    ? preview.map((entry) => renderReminderItem(entry, { preview: true })).join("")
+    : `<div class="empty-state empty-state--quiet"><p class="empty-state__title">还没有待处理事项</p><p class="empty-state__hint">轻点“新建”，安排第一件事。</p></div>`;
+}
 
-          <div class="reminder-item__side">
-            <div class="reminder-primary-actions">${completionAction}${deleteAction}</div>
-            <strong class="countdown">${escapeHtml(entry.completed ? "已完成" : formatCountdown(days))}</strong>
-            <div class="reminder-item__actions">
-              <button class="button button--link" data-action="export" data-id="${escapeHtml(entry.id)}" type="button">导出</button>
-            </div>
-          </div>
-        </article>
-      `;
-    })
-    .join("");
+function renderReminderItem(entry, { preview = false } = {}) {
+  const days = getDaysUntil(entry.date);
+  const tone = entry.completed ? "completed" : getReminderTone(days);
+  const schedule = entry.completed
+    ? `完成于 ${formatCompletedAt(entry.completedAt)}`
+    : days < 0
+      ? `${formatDateWithWeekday(entry.date)} · 已逾期`
+      : days === 0
+        ? `${formatDateWithWeekday(entry.date)} · 今天`
+        : formatDateWithWeekday(entry.date);
+  const notification = entry.completed
+    ? "已完成，不再推送"
+    : entry.notificationEnabled
+      ? `推送 ${entry.leadDays ? `提前 ${entry.leadDays} 天 · ` : "当天 · "}${formatHour(entry.hour)}`
+      : "仅记录，不推送";
+  const completionAction = entry.completed
+    ? `<button class="reminder-complete-button is-completed" data-action="restore" data-id="${escapeHtml(entry.id)}" type="button" aria-label="恢复事项 ${escapeHtml(entry.title)}">${getRestoreIcon()}</button>`
+    : `<button class="reminder-complete-button" data-action="complete" data-id="${escapeHtml(entry.id)}" type="button" aria-label="标记事项 ${escapeHtml(entry.title)} 为已完成">${getCompleteIcon()}</button>`;
+  const deleteAction = `<button class="reminder-delete-button" data-action="delete" data-id="${escapeHtml(entry.id)}" type="button" aria-label="删除事项 ${escapeHtml(entry.title)}">${getDeleteIcon()}</button>`;
+  const itemActions = preview
+    ? `<button class="button button--link" data-switch-view="reminders" type="button">查看</button>`
+    : `<button class="button button--link" data-action="edit" data-id="${escapeHtml(entry.id)}" type="button">编辑</button><button class="button button--link" data-action="export" data-id="${escapeHtml(entry.id)}" type="button">导出</button>`;
+
+  return `
+    <article class="reminder-item reminder-item--${tone}">
+      <div class="reminder-item__icon" aria-hidden="true">${getCategoryIcon(entry.category)}</div>
+      <div class="reminder-item__body">
+        <div class="reminder-item__title-row">
+          <span class="badge">${escapeHtml(entry.category)}</span>
+          <h3 class="reminder-item__title" title="${escapeHtml(entry.title)}">${escapeHtml(entry.title)}</h3>
+        </div>
+        <p class="reminder-item__meta">${escapeHtml(schedule)}</p>
+        <p class="reminder-item__notification">${escapeHtml(notification)}</p>
+        ${entry.notes ? `<p class="reminder-item__notes">${escapeHtml(entry.notes)}</p>` : ""}
+      </div>
+      <div class="reminder-item__side">
+        ${preview ? "" : `<div class="reminder-primary-actions">${completionAction}${deleteAction}</div>`}
+        <strong class="countdown">${escapeHtml(entry.completed ? "已完成" : formatCountdown(days))}</strong>
+        <div class="reminder-item__actions">${itemActions}</div>
+      </div>
+    </article>
+  `;
 }
 
 function formatHour(hour) {

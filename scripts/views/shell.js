@@ -8,7 +8,7 @@ export function createShell() {
       <header class="app-header">
         <div class="brand-lockup">
           <button class="brand" data-switch-view="overview" type="button" aria-label="返回星期首页">
-            <span class="brand__mark" aria-hidden="true"><img src="./assets/icons/app-icon-star-192.png?v=20260727.4" alt="" width="38" height="38" /></span>
+            <span class="brand__mark" aria-hidden="true"><img src="./assets/icons/app-icon-star-192.png?v=20260805.1" alt="" width="38" height="38" /></span>
             <span>星期</span>
           </button>
           <p id="todayLabel">--</p>
@@ -62,18 +62,13 @@ export function createShell() {
                   <p id="reminderSummaryMeta" class="section-head__meta">暂时没有待办</p>
                 </div>
                 <div class="section-head__actions">
-                  <span id="reminderCount" class="soft-chip">0 条</span>
-                  <button class="section-arrow" data-switch-view="compose" type="button" aria-label="新建事项">${iconChevron()}</button>
+                  <span id="overviewReminderCount" class="soft-chip">0 条</span>
+                  <button class="button button--secondary button--compact reminder-create-button" data-switch-view="compose" type="button">${iconPlus()}<span>新建</span></button>
+                  <button class="section-arrow" data-switch-view="reminders" type="button" aria-label="查看全部事项">${iconChevron()}</button>
                 </div>
               </div>
               <span id="reminderSummaryValue" class="sr-only">0</span>
-              <div class="filters" role="tablist" aria-label="提醒筛选">
-                <button class="filter is-active" data-filter="all" type="button">待处理</button>
-                <button class="filter" data-filter="overdue" type="button">已逾期</button>
-                <button class="filter" data-filter="completed" type="button">已完成</button>
-              </div>
-              <p id="reminderBoardState" class="form-note reminder-board-state" aria-live="polite"></p>
-              <div id="reminderList" class="reminder-list"></div>
+              <div id="overviewReminderList" class="reminder-list"></div>
             </article>
 
             <article class="xm-weather-card" aria-labelledby="overviewWeatherTitle">
@@ -86,17 +81,44 @@ export function createShell() {
           </div>
         </section>
 
+        <section class="view view--reminders" data-view="reminders" hidden>
+          <header class="page-intro">
+            <div class="section-kicker"><span>事项</span><span class="section-kicker__line"></span></div>
+            <h1>事项清单</h1>
+            <p>查看待处理、已逾期和已完成的所有事项。</p>
+          </header>
+          <article class="journal-card reminders-card reminders-card--all" id="reminderBoard">
+            <div class="section-head">
+              <div>
+                <h2 class="section-title">全部事项</h2>
+                <p id="reminderBoardMeta" class="section-head__meta">把要做的事都放在这里</p>
+              </div>
+              <div class="section-head__actions">
+                <span id="reminderCount" class="soft-chip">0 条</span>
+                <button class="button button--primary button--compact reminder-create-button" data-switch-view="compose" type="button">${iconPlus()}<span>新建</span></button>
+              </div>
+            </div>
+            <div class="filters" role="tablist" aria-label="事项筛选">
+              <button class="filter is-active" data-filter="all" type="button">待处理</button>
+              <button class="filter" data-filter="overdue" type="button">已逾期</button>
+              <button class="filter" data-filter="completed" type="button">已完成</button>
+            </div>
+            <p id="reminderBoardState" class="form-note reminder-board-state" aria-live="polite"></p>
+            <div id="reminderList" class="reminder-list"></div>
+          </article>
+        </section>
+
         <section class="view view--compose" data-view="compose" hidden>
           <header class="page-intro">
             <div class="section-kicker"><span>事项</span><span class="section-kicker__line"></span></div>
-            <h1>安排一件事</h1>
-            <p>记下日期和提醒时刻，到点让小星轻轻提醒你。</p>
+            <h1 id="reminderFormHeading">新建事项</h1>
+            <p id="reminderFormDescription">记下日期和提醒时刻，到点让小星轻轻提醒你。</p>
           </header>
           <article class="journal-card graph-paper form-card">
             <form id="reminderForm" class="stack-form">
               <label class="field">
                 <span class="field__label">事情</span>
-                <input id="reminderTitleInput" name="title" class="input" type="text" placeholder="手机套餐续费" required />
+                <input id="reminderTitleInput" name="title" class="input" type="text" placeholder="手机套餐续费" maxlength="80" required />
               </label>
               <div class="split-grid">
                 <label class="field">
@@ -125,21 +147,21 @@ export function createShell() {
                 </label>
                 <div class="split-grid">
                   <label class="field">
-                    <span class="field__label">提前几天</span>
-                    <input id="reminderLeadDaysInput" name="leadDays" class="input" type="number" min="0" max="30" value="0" />
+                    <span class="field__label">提醒日期</span>
+                    <select id="reminderLeadDaysInput" name="leadDays" class="select">${leadDayOptions()}</select>
                   </label>
                   <label class="field">
                     <span class="field__label">推送时刻</span>
                     <select id="reminderHourSelect" name="reminderHour" class="select">${hourOptions()}</select>
                   </label>
                 </div>
-                <p class="timing-hint">计划在所选时刻发送；若定时任务延迟，会在该小时内自动补发一次。</p>
+                <p class="timing-hint">“当天”表示在事项日期当天提醒；若定时任务延迟，会在该小时内自动补发一次。</p>
               </fieldset>
               <label class="field">
                 <span class="field__label">备注</span>
-                <textarea id="reminderNotesInput" name="notes" class="textarea" placeholder="金额、联系人、续费规则..."></textarea>
+                <textarea id="reminderNotesInput" name="notes" class="textarea" placeholder="金额、联系人、续费规则..." maxlength="300"></textarea>
               </label>
-              <button class="button button--primary button--block" type="submit">保存事项</button>
+              <button id="reminderSubmitButton" class="button button--primary button--block" type="submit">保存事项</button>
               <p id="reminderSaveState" class="form-note" aria-live="polite"></p>
             </form>
           </article>
@@ -256,7 +278,7 @@ export function createShell() {
 
       <nav class="bottom-tabs" aria-label="主导航">
         <button class="bottom-tabs__item is-active" data-switch-view="overview" data-tab-button type="button" aria-current="page">${iconHome()}<span>首页</span></button>
-        <button class="bottom-tabs__item" data-switch-view="compose" data-tab-button type="button">${iconChecklist()}<span>事项</span></button>
+        <button class="bottom-tabs__item" data-switch-view="reminders" data-tab-button type="button">${iconChecklist()}<span>事项</span></button>
         <button class="bottom-tabs__item" data-switch-view="weather" data-tab-button type="button">${iconWeather()}<span>天气</span></button>
         <button class="bottom-tabs__item" data-switch-view="settings" data-tab-button type="button">${iconUser()}<span>我的</span></button>
       </nav>
@@ -269,6 +291,13 @@ function hourOptions() {
     const value = String(hour).padStart(2, "0");
     const selected = hour === 9 ? " selected" : "";
     return `<option value="${hour}"${selected}>${value}:00</option>`;
+  }).join("");
+}
+
+function leadDayOptions() {
+  return Array.from({ length: 31 }, (_, day) => {
+    const label = day === 0 ? "当天" : `提前 ${day} 天`;
+    return `<option value="${day}">${label}</option>`;
   }).join("");
 }
 

@@ -53,3 +53,35 @@ test("photo themes can be added, selected, and deleted independently", async () 
   assert.deepEqual(state.getState().preferences.customThemes.map((entry) => entry.id), [second.id]);
   assert.equal(state.getState().preferences.activeCustomThemeId, second.id);
 });
+
+test("reminders can be updated without changing their completion history", async () => {
+  const storage = new Map();
+  globalThis.localStorage = {
+    getItem: (key) => storage.get(key) || null,
+    setItem: (key, value) => storage.set(key, String(value)),
+    removeItem: (key) => storage.delete(key)
+  };
+  globalThis.window = { dispatchEvent: () => {} };
+  globalThis.CustomEvent = class CustomEvent {
+    constructor(type) {
+      this.type = type;
+    }
+  };
+
+  const state = await import(`../scripts/state.js?edit=${Date.now()}`);
+  state.addReminder({ title: "旧标题", date: "2099-08-10", category: "账单", leadDays: 0, hour: 9, notificationEnabled: true });
+  const [reminder] = state.getState().reminders;
+  state.setReminderCompletion(reminder.id, true);
+  const completedAt = state.getState().reminders[0].completedAt;
+
+  state.updateReminder(reminder.id, { title: "更新后的标题", leadDays: 2, hour: 18, notes: "已修改" });
+  assert.deepEqual(state.getState().reminders[0], {
+    ...state.getState().reminders[0],
+    title: "更新后的标题",
+    leadDays: 2,
+    hour: 18,
+    notes: "已修改",
+    completed: true,
+    completedAt
+  });
+});

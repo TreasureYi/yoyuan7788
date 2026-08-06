@@ -30,6 +30,24 @@ export function addReminder(payload) {
   persistState();
 }
 
+export function updateReminder(id, payload) {
+  state.reminders = state.reminders.map((entry) => {
+    if (entry.id !== id) {
+      return entry;
+    }
+
+    return normalizeReminder({
+      ...entry,
+      ...payload,
+      id: entry.id,
+      createdAt: entry.createdAt,
+      completed: entry.completed,
+      completedAt: entry.completedAt
+    });
+  });
+  persistState();
+}
+
 export function deleteReminder(id) {
   state.reminders = state.reminders.filter((entry) => entry.id !== id);
   persistState();

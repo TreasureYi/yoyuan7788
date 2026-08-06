@@ -14,6 +14,7 @@ import {
   setWeatherFailure,
   setWeatherPending,
   setWeatherSuccess,
+  updateReminder,
   updateSalary
 } from "./state.js";
 import { exportSingleReminder } from "./services/calendar.js";
@@ -46,11 +47,13 @@ import {
   renderOverviewWeather,
   renderPushPanel,
   renderReminderBoard,
+  renderOverviewReminderPreview,
   renderSalaryPanel
 } from "./views/render.js";
 import { createShell } from "./views/shell.js";
 
 let activeView = "overview";
+let editingReminderId = null;
 let cloudSyncTimer = null;
 let cloudSyncPaused = false;
 let cloudStatusText = "";
@@ -121,6 +124,9 @@ function bindEvents(refs) {
     const nextView = button.dataset.switchView;
     if (!nextView) {
       return;
+    }
+    if (nextView === "compose") {
+      resetReminderForm(refs);
     }
     setActiveView(refs, nextView);
   });
@@ -253,8 +259,7 @@ function bindEvents(refs) {
   refs.reminderForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     const wantsNotification = refs.reminderNotificationInput.checked;
-
-    addReminder({
+    const payload = {
       title: refs.reminderTitleInput.value.trim(),
       date: refs.reminderDateInput.value,
       category: refs.reminderCategoryInput.value,
@@ -262,28 +267,30 @@ function bindEvents(refs) {
       hour: Number(refs.reminderHourSelect.value) || 0,
       notificationEnabled: wantsNotification,
       notes: refs.reminderNotesInput.value.trim()
-    });
+    };
+    const isEditing = Boolean(editingReminderId);
 
-    refs.reminderForm.reset();
-    syncReminderDateDisplay(refs);
-    refs.reminderCategoryInput.value = "账单";
-    refs.reminderLeadDaysInput.value = "0";
-    refs.reminderHourSelect.value = "9";
-    refs.reminderNotificationInput.checked = true;
-    refs.reminderSaveState.textContent = "事项已保存。";
+    if (isEditing) {
+      updateReminder(editingReminderId, payload);
+    } else {
+      addReminder(payload);
+    }
+
+    resetReminderForm(refs);
+    refs.reminderSaveState.textContent = isEditing ? "事项已更新。" : "事项已保存。";
     renderAll(refs);
 
     if (wantsNotification && !getState().salary.notification.enabled) {
       const enabled = await enablePushAndSync(refs);
       refs.reminderSaveState.textContent = enabled
-        ? "事项已保存，通知已同步。"
-        : "事项已保存，但通知尚未同步。请在设置中检查状态。";
-      setActiveView(refs, enabled ? "overview" : "settings");
+        ? isEditing ? "事项已更新，通知已同步。" : "事项已保存，通知已同步。"
+        : isEditing ? "事项已更新，但通知尚未同步。请在设置中检查状态。" : "事项已保存，但通知尚未同步。请在设置中检查状态。";
+      setActiveView(refs, enabled ? "reminders" : "settings");
       return;
     }
 
     await syncExistingPushSubscription(refs);
-    setActiveView(refs, "overview");
+    setActiveView(refs, "reminders");
   });
 
   refs.pushEnableButton.addEventListener("click", async () => {
@@ -346,7 +353,7 @@ function bindEvents(refs) {
     });
   });
 
-  refs.reminderList.addEventListener("click", async (event) => {
+  root?.addEventListener("click", async (event) => {
     const actionButton = event.target instanceof Element ? event.target.closest("[data-action]") : null;
     if (!actionButton) {
       return;
@@ -374,6 +381,11 @@ function bindEvents(refs) {
       return;
     }
 
+    if (action === "edit") {
+      openReminderEditor(refs, reminder);
+      return;
+    }
+
     if (action === "complete" || action === "restore") {
       const completed = action === "complete";
       setReminderCompletion(id, completed);
@@ -391,6 +403,36 @@ function bindEvents(refs) {
   });
 }
 
+function openReminderEditor(refs, reminder) {
+  editingReminderId = reminder.id;
+  refs.reminderTitleInput.value = reminder.title;
+  refs.reminderDateInput.value = reminder.date;
+  refs.reminderCategoryInput.value = reminder.category;
+  refs.reminderLeadDaysInput.value = String(reminder.leadDays);
+  refs.reminderHourSelect.value = String(reminder.hour);
+  refs.reminderNotificationInput.checked = reminder.notificationEnabled;
+  refs.reminderNotesInput.value = reminder.notes;
+  refs.reminderFormHeading.textContent = "编辑事项";
+  refs.reminderFormDescription.textContent = "更新日期、提醒或备注后，保存即可生效。";
+  refs.reminderSubmitButton.textContent = "保存修改";
+  refs.reminderSaveState.textContent = "";
+  syncReminderDateDisplay(refs);
+  setActiveView(refs, "compose");
+}
+
+function resetReminderForm(refs) {
+  editingReminderId = null;
+  refs.reminderForm.reset();
+  refs.reminderCategoryInput.value = "账单";
+  refs.reminderLeadDaysInput.value = "0";
+  refs.reminderHourSelect.value = "9";
+  refs.reminderNotificationInput.checked = true;
+  refs.reminderFormHeading.textContent = "新建事项";
+  refs.reminderFormDescription.textContent = "记下日期和提醒时刻，到点让小星轻轻提醒你。";
+  refs.reminderSubmitButton.textContent = "保存事项";
+  syncReminderDateDisplay(refs);
+}
+
 function syncReminderDateDisplay(refs) {
   const value = refs.reminderDateInput.value;
   refs.reminderDateDisplay.textContent = value ? formatDateLong(value) : "选择日期";
@@ -406,6 +448,7 @@ function renderAll(refs) {
   renderPushPanel(state, refs, getPushCapabilities());
   renderOverviewWeather(state, refs);
   renderReminderBoard(state, refs);
+  renderOverviewReminderPreview(state, refs);
   renderCloudPanel(refs);
   syncViewState(refs);
 }
@@ -498,7 +541,8 @@ function syncViewState(refs) {
   });
 
   refs.tabButtons.forEach((button) => {
-    const isActive = button.dataset.switchView === activeView;
+    const isActive = button.dataset.switchView === activeView
+      || (activeView === "compose" && button.dataset.switchView === "reminders");
     button.classList.toggle("is-active", isActive);
     if (isActive) {
       button.setAttribute("aria-current", "page");
